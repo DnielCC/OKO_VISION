@@ -1,10 +1,13 @@
 from flask import Flask
-from routes import user_bp  # Importamos el Blueprint
+from routes import user_bp  
 
 def create_app():
     app = Flask(__name__)
-
-    # REGISTRAMOS EL BLUEPRINT
+    
+    # Configuración necesaria para sesiones y flash messages
+    app.config['SECRET_KEY'] = 'tu_clave_secreta_aqui'
+    
+    # Registrar el blueprint de rutas de usuario
     app.register_blueprint(user_bp)
 
     return app
