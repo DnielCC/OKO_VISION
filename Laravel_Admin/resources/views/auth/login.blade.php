@@ -402,18 +402,7 @@
                     </div>
                 </div>
                 
-                <!-- Remember Me -->
-                <div class="form-group" style="display: flex; align-items: center; margin-bottom: 1.5rem;">
-                    <input 
-                        id="remember" 
-                        type="checkbox" 
-                        name="remember" 
-                        style="margin-right: 0.5rem; width: auto;"
-                    >
-                    <label for="remember" style="margin: 0; font-weight: normal; font-size: 0.9rem;">
-                        Recordarme
-                    </label>
-                </div>
+        
                 
                 <!-- Submit Button -->
                 <button type="submit" class="login-btn" id="submitBtn">
@@ -422,12 +411,7 @@
                 </button>
             </form>
             
-            <!-- Forgot Password -->
-            <div class="forgot-password">
-                <a href="#">
-                    ¿Olvidaste tu contraseña?
-                </a>
-            </div>
+           
         </div>
     </div>
     
