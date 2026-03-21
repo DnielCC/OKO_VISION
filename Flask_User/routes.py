@@ -107,39 +107,92 @@ def vehiculos():
     vehiculos = VEHICULOS.get(username, [])
     
     if request.method == 'POST':
-        # Verificar límite de vehículos
-        if len(vehiculos) >= 2:
-            flash('Ya has alcanzado el límite de 2 vehículos', 'error')
-            return redirect(url_for('user.vehiculos'))
+        action = request.form.get('action')
         
-        # Obtener datos del formulario
-        placa = request.form.get('placa', '').strip().upper()
-        marca = request.form.get('marca', '').strip()
-        modelo = request.form.get('modelo', '').strip()
-        color = request.form.get('color', '').strip()
-        
-        # Validar campos
-        if not all([placa, marca, modelo, color]):
-            flash('Todos los campos son obligatorios', 'error')
-            return redirect(url_for('user.vehiculos'))
-        
-        # Verificar que la placa no esté duplicada
-        for existing_vehicle in vehiculos:
-            if existing_vehicle['placa'] == placa:
-                flash('Ya existe un vehículo con esa placa', 'error')
+        # Acción de agregar vehículo
+        if action == 'edit':
+            original_placa = request.form.get('original_placa')
+            placa = request.form.get('placa', '').strip().upper()
+            marca = request.form.get('marca', '').strip()
+            modelo = request.form.get('modelo', '').strip()
+            color = request.form.get('color', '').strip()
+            
+            # Validar campos
+            if not all([placa, marca, modelo, color]):
+                flash('Todos los campos son obligatorios', 'error')
                 return redirect(url_for('user.vehiculos'))
+            
+            # Buscar y editar el vehículo
+            for i, vehicle in enumerate(vehiculos):
+                if vehicle['placa'] == original_placa:
+                    # Verificar que la nueva placa no esté duplicada (si cambia)
+                    if placa != original_placa:
+                        for other_vehicle in vehiculos:
+                            if other_vehicle['placa'] == placa:
+                                flash('Ya existe un vehículo con esa placa', 'error')
+                                return redirect(url_for('user.vehiculos'))
+                    
+                    # Actualizar vehículo
+                    vehiculos[i] = {
+                        'placa': placa,
+                        'marca': marca,
+                        'modelo': modelo,
+                        'color': color
+                    }
+                    flash('Vehículo actualizado exitosamente', 'success')
+                    return redirect(url_for('user.vehiculos'))
+            
+            flash('Vehículo no encontrado', 'error')
+            return redirect(url_for('user.vehiculos'))
         
-        # Agregar nuevo vehículo
-        nuevo_vehiculo = {
-            'placa': placa,
-            'marca': marca,
-            'modelo': modelo,
-            'color': color
-        }
+        elif action == 'delete':
+            delete_placa = request.form.get('delete_placa')
+            
+            # Buscar y eliminar el vehículo
+            for i, vehicle in enumerate(vehiculos):
+                if vehicle['placa'] == delete_placa:
+                    vehiculos.pop(i)
+                    flash('Vehículo eliminado exitosamente', 'success')
+                    return redirect(url_for('user.vehiculos'))
+            
+            flash('Vehículo no encontrado', 'error')
+            return redirect(url_for('user.vehiculos'))
         
-        VEHICULOS[username].append(nuevo_vehiculo)
-        flash('Vehículo agregado exitosamente', 'success')
-        return redirect(url_for('user.vehiculos'))
+        else:
+            # Acción de agregar vehículo (comportamiento original)
+            # Verificar límite de vehículos
+            if len(vehiculos) >= 2:
+                flash('Ya has alcanzado el límite de 2 vehículos', 'error')
+                return redirect(url_for('user.vehiculos'))
+            
+            # Obtener datos del formulario
+            placa = request.form.get('placa', '').strip().upper()
+            marca = request.form.get('marca', '').strip()
+            modelo = request.form.get('modelo', '').strip()
+            color = request.form.get('color', '').strip()
+            
+            # Validar campos
+            if not all([placa, marca, modelo, color]):
+                flash('Todos los campos son obligatorios', 'error')
+                return redirect(url_for('user.vehiculos'))
+            
+            # Verificar que la placa no esté duplicada
+            for existing_vehicle in vehiculos:
+                if existing_vehicle['placa'] == placa:
+                    flash('Ya existe un vehículo con esa placa', 'error')
+                    return redirect(url_for('user.vehiculos'))
+            
+            # Agregar nuevo vehículo
+            nuevo_vehiculo = {
+                'placa': placa,
+                'marca': marca,
+                'modelo': modelo,
+                'color': color
+            }
+            
+            VEHICULOS[username].append(nuevo_vehiculo)
+            flash('Vehículo agregado exitosamente', 'success')
+            return redirect(url_for('user.vehiculos'))
     
     return render_template('vehiculos.html', user=user_info, vehiculos=vehiculos)
 

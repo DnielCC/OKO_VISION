@@ -165,6 +165,9 @@
                     </td>
                     <td class="py-3 px-4">
                         <div class="flex items-center space-x-2">
+                            <button class="btn-secondary text-xs px-2 py-1" onclick="viewAlert('ALT-001')">
+                                <i class="fas fa-eye mr-1"></i>Ver
+                            </button>
                             <button class="btn-primary text-xs px-2 py-1" onclick="validateAlert('ALT-001')">
                                 <i class="fas fa-check mr-1"></i>Validar
                             </button>
@@ -213,6 +216,9 @@
                     </td>
                     <td class="py-3 px-4">
                         <div class="flex items-center space-x-2">
+                            <button class="btn-secondary text-xs px-2 py-1" onclick="viewAlert('ALT-002')">
+                                <i class="fas fa-eye mr-1"></i>Ver
+                            </button>
                             <button class="btn-primary text-xs px-2 py-1" onclick="validateAlert('ALT-002')">
                                 <i class="fas fa-check mr-1"></i>Validar
                             </button>
@@ -261,11 +267,11 @@
                     </td>
                     <td class="py-3 px-4">
                         <div class="flex items-center space-x-2">
-                            <button class="text-gray-400 text-xs px-2 py-1" disabled>
-                                <i class="fas fa-check mr-1"></i>Validado
+                            <button class="btn-secondary text-xs px-2 py-1" onclick="viewAlert('ALT-003')">
+                                <i class="fas fa-eye mr-1"></i>Ver
                             </button>
                             <button class="text-gray-400 text-xs px-2 py-1" disabled>
-                                <i class="fas fa-eye mr-1"></i>Ver
+                                <i class="fas fa-check mr-1"></i>Validado
                             </button>
                         </div>
                     </td>
@@ -309,11 +315,11 @@
                     </td>
                     <td class="py-3 px-4">
                         <div class="flex items-center space-x-2">
-                            <button class="text-gray-400 text-xs px-2 py-1" disabled>
-                                <i class="fas fa-check mr-1"></i>Validado
+                            <button class="btn-secondary text-xs px-2 py-1" onclick="viewAlert('ALT-004')">
+                                <i class="fas fa-eye mr-1"></i>Ver
                             </button>
                             <button class="text-gray-400 text-xs px-2 py-1" disabled>
-                                <i class="fas fa-eye mr-1"></i>Ver
+                                <i class="fas fa-check mr-1"></i>Validado
                             </button>
                         </div>
                     </td>
@@ -357,11 +363,11 @@
                     </td>
                     <td class="py-3 px-4">
                         <div class="flex items-center space-x-2">
-                            <button class="text-gray-400 text-xs px-2 py-1" disabled>
-                                <i class="fas fa-check mr-1"></i>Validado
+                            <button class="btn-secondary text-xs px-2 py-1" onclick="viewAlert('ALT-005')">
+                                <i class="fas fa-eye mr-1"></i>Ver
                             </button>
                             <button class="text-gray-400 text-xs px-2 py-1" disabled>
-                                <i class="fas fa-eye mr-1"></i>Ver
+                                <i class="fas fa-check mr-1"></i>Validado
                             </button>
                         </div>
                     </td>
@@ -410,8 +416,157 @@
 </div>
 
 <script>
+// Alert data simulation
+const alertData = {
+    'ALT-001': {
+        id: 'ALT-001',
+        fecha: '15/02/2026',
+        hora: '14:32:15',
+        tipo: 'Crítico',
+        descripcion: 'Acceso no autorizado detectado',
+        detalle: 'Vehículo intentó ingresar sin permiso',
+        vehiculo: 'XYZ-999',
+        propietario: 'No registrado',
+        ubicacion: 'Entrada Principal',
+        camara: 'Cámara 1',
+        estado: 'Pendiente',
+        imagen: 'https://via.placeholder.com/400x300/0D1B35/E0E6ED?text=Captura+de+Cámara'
+    },
+    'ALT-002': {
+        id: 'ALT-002',
+        fecha: '15/02/2026',
+        hora: '13:45:22',
+        tipo: 'Alta',
+        descripcion: 'Detección de placa falsificada',
+        detalle: 'IA detectó inconsistencias en la placa',
+        vehiculo: 'ABC-123',
+        propietario: 'Juan Pérez',
+        ubicacion: 'Salida Secundaria',
+        camara: 'Cámara 3',
+        estado: 'En revisión',
+        imagen: 'https://via.placeholder.com/400x300/0D1B35/E0E6ED?text=Detección+de+Placa'
+    },
+    'ALT-003': {
+        id: 'ALT-003',
+        fecha: '15/02/2026',
+        hora: '12:15:30',
+        tipo: 'Media',
+        descripcion: 'Vehículo estacionado en zona prohibida',
+        detalle: 'Superó el tiempo permitido',
+        vehiculo: 'DEF-456',
+        propietario: 'María López',
+        ubicacion: 'Zona de Carga',
+        camara: 'Cámara 2',
+        estado: 'Resuelta',
+        imagen: 'https://via.placeholder.com/400x300/0D1B35/E0E6ED?text=Zona+Prohibida'
+    },
+    'ALT-004': {
+        id: 'ALT-004',
+        fecha: '15/02/2026',
+        hora: '11:30:45',
+        tipo: 'Baja',
+        descripcion: 'Detección de animal en vía',
+        detalle: 'Gato detectado cerca de entrada',
+        vehiculo: 'N/A',
+        propietario: 'Animal',
+        ubicacion: 'Jardines',
+        camara: 'Cámara 4',
+        estado: 'Resuelta',
+        imagen: 'https://via.placeholder.com/400x300/0D1B35/E0E6ED?text=Detección+Animal'
+    },
+    'ALT-005': {
+        id: 'ALT-005',
+        fecha: '15/02/2026',
+        hora: '10:15:20',
+        tipo: 'Crítico',
+        descripcion: 'Intento de acceso forzado',
+        detalle: 'Barrera física dañada',
+        vehiculo: 'GHI-789',
+        propietario: 'Desconocido',
+        ubicacion: 'Entrada Principal',
+        camara: 'Cámara 1',
+        estado: 'Resuelta',
+        imagen: 'https://via.placeholder.com/400x300/0D1B35/E0E6ED?text=Acceso+Forzado'
+    }
+};
+
+function viewAlert(alertId) {
+    const alert = alertData[alertId];
+    if (!alert) return;
+    
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+        <div class="space-y-4">
+            <div class="bg-gray-800 rounded-lg p-4">
+                <img src="${alert.imagen}" alt="Captura de alerta" class="w-full rounded-lg mb-4">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">ID Alerta</p>
+                    <p class="text-white font-semibold">${alert.id}</p>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Fecha/Hora</p>
+                    <p class="text-white font-semibold">${alert.fecha} ${alert.hora}</p>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Tipo</p>
+                    <span class="${alert.tipo === 'Crítico' ? 'badge-danger' : alert.tipo === 'Alta' ? 'badge-warning' : alert.tipo === 'Media' ? 'bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-xs font-semibold' : 'bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full text-xs font-semibold'}">${alert.tipo}</span>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Estado</p>
+                    <span class="${alert.estado === 'Pendiente' ? 'badge-danger' : alert.estado === 'En revisión' ? 'badge-warning' : 'badge-success'}">${alert.estado}</span>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-4">
+                <p class="text-gray-400 text-sm mb-1">Descripción</p>
+                <p class="text-white font-medium">${alert.descripcion}</p>
+                <p class="text-gray-400 text-sm mt-2">${alert.detalle}</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Vehículo</p>
+                    <p class="text-white font-semibold">${alert.vehiculo}</p>
+                    <p class="text-gray-400 text-sm">${alert.propietario}</p>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Ubicación</p>
+                    <p class="text-white font-semibold">${alert.ubicacion}</p>
+                    <p class="text-gray-400 text-sm">${alert.camara}</p>
+                </div>
+            </div>
+            
+            ${alert.estado === 'Pendiente' || alert.estado === 'En revisión' ? `
+            <div class="flex space-x-3 pt-4 border-t border-gray-700">
+                <button class="btn-primary" onclick="validateFromModal('${alertId}')">
+                    <i class="fas fa-check mr-2"></i>Validar Alerta
+                </button>
+                <button class="btn-secondary" onclick="reportFromModal('${alertId}')">
+                    <i class="fas fa-flag mr-2"></i>Reportar
+                </button>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    document.getElementById('alertModal').classList.remove('hidden');
+}
+
+function validateFromModal(alertId) {
+    closeAlertModal();
+    validateAlert(alertId);
+}
+
+function reportFromModal(alertId) {
+    closeAlertModal();
+    reportAlert(alertId);
+}
+
 function validateAlert(alertId) {
-    if (confirm(`¿Validar la alerta ${alertId}? Esta acción marcará la alerta como revisada.`)) {
+    if (confirm(`¿Validar la alerta ${alertId}? Esta acción marcará la alerta como revisada y resuelta.`)) {
         // Simulate validation
         showNotification(`Alerta ${alertId} validada exitosamente`, 'success');
         
@@ -423,7 +578,7 @@ function validateAlert(alertId) {
 }
 
 function reportAlert(alertId) {
-    const reason = prompt(`¿Por qué razón desea reportar la alerta ${alertId}?`);
+    const reason = prompt(`¿Por qué razón desea reportar la alerta ${alertId}?\n\nEj: Falso positivo, información incorrecta, requiere investigación adicional, etc.`);
     if (reason) {
         // Simulate reporting
         showNotification(`Alerta ${alertId} reportada: ${reason}`, 'warning');
@@ -437,7 +592,7 @@ function reportAlert(alertId) {
 
 function showNotification(message, type) {
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ${
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full ${
         type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
     } text-white`;
     notification.innerHTML = `

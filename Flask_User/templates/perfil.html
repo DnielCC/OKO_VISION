@@ -1,13 +1,510 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil
-    </title>
+    <title>OKO VISION - Mi Perfil</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #050A18 0%, #0D1B35 100%);
+            min-height: 100vh;
+            color: #E0E6ED;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            background: rgba(13, 27, 53, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header h1 {
+            color: #00F2FF;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #9ca3af;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(0, 242, 255, 0.2);
+            border: 1px solid #00F2FF;
+            color: #00F2FF;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        }
+        
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+        
+        .profile-card {
+            background: rgba(13, 27, 53, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #00F2FF, #0080ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+            color: #050A18;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
+        }
+        
+        .profile-name {
+            font-size: 1.5rem;
+            color: #E0E6ED;
+            margin-bottom: 0.5rem;
+        }
+        
+        .profile-matricula {
+            color: #00F2FF;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 255, 135, 0.2);
+            border: 1px solid #00FF87;
+            color: #00FF87;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00F2FF, #0080ff);
+            color: #050A18;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0, 242, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(0, 242, 255, 0.2);
+            border: 1px solid #00F2FF;
+            color: #00F2FF;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        }
+        
+        .details-card {
+            background: rgba(13, 27, 53, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .details-section {
+            margin-bottom: 2rem;
+        }
+        
+        .details-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            color: #00F2FF;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .detail-label {
+            color: #00F2FF;
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .detail-value {
+            color: #E0E6ED;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .access-info {
+            background: rgba(0, 255, 135, 0.1);
+            border: 1px solid rgba(0, 255, 135, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .access-info h4 {
+            color: #00FF87;
+            margin-bottom: 1rem;
+        }
+        
+        .access-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 255, 135, 0.2);
+        }
+        
+        .access-item:last-child {
+            border-bottom: none;
+        }
+        
+        .access-label {
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+        
+        .access-value {
+            color: #E0E6ED;
+            font-weight: 500;
+        }
+        
+        /* Flash messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            max-width: 400px;
+        }
+        
+        .flash-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .flash-success {
+            background: rgba(0, 255, 135, 0.1);
+            border-left-color: #00FF87;
+            color: #00FF87;
+        }
+        
+        .flash-error {
+            background: rgba(255, 49, 49, 0.1);
+            border-left-color: #FF3131;
+            color: #FF3131;
+        }
+        
+        .flash-info {
+            background: rgba(0, 242, 255, 0.1);
+            border-left-color: #00F2FF;
+            color: #00F2FF;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .back-btn {
+                position: static;
+                display: block;
+                margin-bottom: 1rem;
+                width: fit-content;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <h1>ola</h1>
+    <a href="{{ url_for('user.dashboard') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+    </a>
     
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-user"></i> Mi Perfil</h1>
+            <p>Información de tu cuenta y datos de acceso</p>
+        </div>
+        
+        <div class="profile-grid">
+            <!-- Profile Summary -->
+            <div class="profile-card">
+                <div class="avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                
+                <h2 class="profile-name">{{ user.nombre }}</h2>
+                <p class="profile-matricula">{{ user.matricula }}</p>
+                
+                <div class="status-badge">
+                    <i class="fas fa-check-circle"></i> Cuenta Activa
+                </div>
+                
+                <div class="profile-actions">
+                    <a href="{{ url_for('user.qr') }}" class="btn btn-primary">
+                        <i class="fas fa-qrcode"></i> Mi QR de Acceso
+                    </a>
+                    <a href="{{ url_for('user.vehiculos') }}" class="btn btn-secondary">
+                        <i class="fas fa-car"></i> Mis Vehículos
+                    </a>
+                    <a href="{{ url_for('user.historial') }}" class="btn btn-secondary">
+                        <i class="fas fa-history"></i> Historial
+                    </a>
+                    <a href="{{ url_for('user.logout') }}" class="btn btn-secondary" style="background: rgba(255, 49, 49, 0.2); border-color: #FF3131; color: #FF3131;">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Detailed Information -->
+            <div class="details-card">
+                <div class="details-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-user"></i> Información Personal
+                    </h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Nombre Completo</div>
+                            <div class="detail-value">{{ user.nombre }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Matrícula</div>
+                            <div class="detail-value">{{ user.matricula }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Usuario</div>
+                            <div class="detail-value">{{ session.user_id }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Estatus</div>
+                            <div class="detail-value" style="color: #00FF87;">Activo</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="details-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-car"></i> Vehículos Registrados
+                    </h3>
+                    {% set vehiculos = VEHICULOS.get(session.user_id, []) %}
+                    {% if vehiculos %}
+                        <div class="detail-grid">
+                            {% for vehicle in vehiculos %}
+                                <div class="detail-item">
+                                    <div class="detail-label">Vehículo {{ loop.index }}</div>
+                                    <div class="detail-value">{{ vehicle.placa }} - {{ vehicle.marca }} {{ vehicle.modelo }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+                            <i class="fas fa-car" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>No tienes vehículos registrados</p>
+                            <a href="{{ url_for('user.vehiculos') }}" class="btn btn-primary" style="margin-top: 1rem;">
+                                <i class="fas fa-plus"></i> Registrar Vehículo
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="details-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-shield-alt"></i> Información de Acceso
+                    </h3>
+                    <div class="access-info">
+                        <h4>Permisos y Vigencia</h4>
+                        <div class="access-item">
+                            <span class="access-label">Tipo de Acceso</span>
+                            <span class="access-value">Estudiante</span>
+                        </div>
+                        <div class="access-item">
+                            <span class="access-label">Vigencia del QR</span>
+                            <span class="access-value">Semestre Actual</span>
+                        </div>
+                        <div class="access-item">
+                            <span class="access-label">Máximo Vehículos</span>
+                            <span class="access-value">2 registrados</span>
+                        </div>
+                        <div class="access-item">
+                            <span class="access-label">Acceso a Instalaciones</span>
+                            <span class="access-value">Completo</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="details-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-clock"></i> Actividad Reciente
+                    </h3>
+                    {% set accesos = ACCESOS.get(session.user_id, []) %}
+                    {% if accesos %}
+                        {% set acceso_reciente = accesos[0] %}
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Último Acceso</div>
+                                <div class="detail-value">{{ acceso_reciente.fecha }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Tipo</div>
+                                <div class="detail-value">{{ acceso_reciente.tipo }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Vehículo</div>
+                                <div class="detail-value">{{ acceso_reciente.placa }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Estatus</div>
+                                <div class="detail-value" style="color: #00FF87;">{{ acceso_reciente.estatus }}</div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+                            <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>No tienes accesos registrados</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <script>
+        // Auto-ocultar flash messages
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateX(100px)';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
+        }, 100);
+        
+        // Animación de entrada para las tarjetas
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.profile-card, .details-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
 </body>
 </html>

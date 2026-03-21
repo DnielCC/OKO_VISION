@@ -256,25 +256,7 @@
             </button>
         </div>
         
-        <!-- Quick Actions -->
-        <div class="card mt-6">
-            <h3 class="text-lg font-semibold text-white mb-4">Acciones Rápidas</h3>
-            <div class="space-y-2">
-                <button class="w-full btn-primary text-sm">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Registrar Nuevo Usuario
-                </button>
-                <button class="w-full btn-secondary text-sm">
-                    <i class="fas fa-car mr-2"></i>
-                    Registrar Vehículo
-                </button>
-                <button class="w-full btn-secondary text-sm">
-                    <i class="fas fa-bell mr-2"></i>
-                    Configurar Alertas
-                </button>
             </div>
-        </div>
-    </div>
 </div>
 
 <!-- Activity Timeline -->

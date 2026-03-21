@@ -327,10 +327,10 @@
                                 <i class="fas fa-check-circle"></i> Activo
                             </div>
                             <div class="vehicle-actions">
-                                <a href="#" class="btn-edit">
+                                <a href="#" class="btn-edit" onclick="showEditVehicleForm('{{ vehicle.placa }}', '{{ vehicle.marca }}', '{{ vehicle.modelo }}', '{{ vehicle.color }}')">
                                     <i class="fas fa-edit"></i> Editar
                                 </a>
-                                <a href="#" class="btn-delete">
+                                <a href="#" class="btn-delete" onclick="deleteVehicle('{{ vehicle.placa }}')">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </a>
                             </div>
@@ -381,7 +381,7 @@
                 </button>
             </div>
             
-            <form method="POST" action="{{ url_for('user.vehiculos') }}">
+            <form method="POST" action="{{ url_for('user.vehiculos') }}" id="addVehicleForm">
                 <div class="form-group">
                     <label for="placa">
                         <i class="fas fa-id-card"></i> Placa
@@ -442,6 +442,118 @@
                     </button>
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-save"></i> Agregar Vehículo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para editar vehículo -->
+    <div id="editVehicleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Editar Vehículo</h2>
+                <button class="close-btn" onclick="hideEditVehicleForm()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form method="POST" action="{{ url_for('user.vehiculos') }}" id="editVehicleForm">
+                <input type="hidden" name="original_placa" id="original_placa">
+                <input type="hidden" name="action" value="edit">
+                
+                <div class="form-group">
+                    <label for="edit_placa">
+                        <i class="fas fa-id-card"></i> Placa
+                    </label>
+                    <input type="text" id="edit_placa" name="placa" required 
+                           placeholder="Ej: ABC-123" maxlength="10"
+                           style="text-transform: uppercase;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit_marca">
+                        <i class="fas fa-car"></i> Marca
+                    </label>
+                    <select id="edit_marca" name="marca" required>
+                        <option value="">Selecciona una marca</option>
+                        <option value="Toyota">Toyota</option>
+                        <option value="Honda">Honda</option>
+                        <option value="Nissan">Nissan</option>
+                        <option value="Ford">Ford</option>
+                        <option value="Chevrolet">Chevrolet</option>
+                        <option value="Volkswagen">Volkswagen</option>
+                        <option value="Mazda">Mazda</option>
+                        <option value="Hyundai">Hyundai</option>
+                        <option value="Kia">Kia</option>
+                        <option value="Otra">Otra</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit_modelo">
+                        <i class="fas fa-car-side"></i> Modelo
+                    </label>
+                    <input type="text" id="edit_modelo" name="modelo" required 
+                           placeholder="Ej: Corolla, Civic, Sentra">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit_color">
+                        <i class="fas fa-palette"></i> Color
+                    </label>
+                    <select id="edit_color" name="color" required>
+                        <option value="">Selecciona un color</option>
+                        <option value="Blanco">Blanco</option>
+                        <option value="Negro">Negro</option>
+                        <option value="Gris">Gris</option>
+                        <option value="Azul">Azul</option>
+                        <option value="Rojo">Rojo</option>
+                        <option value="Verde">Verde</option>
+                        <option value="Amarillo">Amarillo</option>
+                        <option value="Plateado">Plateado</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="hideEditVehicleForm()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal de confirmación para eliminar -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación</h2>
+                <button class="close-btn" onclick="hideDeleteConfirm()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div style="text-align: center; padding: 2rem 0;">
+                <i class="fas fa-car" style="font-size: 4rem; color: #FF3131; margin-bottom: 1rem;"></i>
+                <p style="color: #E0E6ED; margin-bottom: 1rem;">¿Estás seguro de que deseas eliminar el vehículo con placa <strong id="deletePlate" style="color: #00F2FF;"></strong>?</p>
+                <p style="color: #9ca3af; font-size: 0.9rem;">Esta acción no se puede deshacer</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('user.vehiculos') }}" id="deleteForm">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="delete_placa" id="delete_placa">
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="hideDeleteConfirm()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #FF3131, #ff6b6b);">
+                        <i class="fas fa-trash"></i> Eliminar Vehículo
                     </button>
                 </div>
             </form>
@@ -654,13 +766,50 @@
         function hideAddVehicleForm() {
             document.getElementById('addVehicleModal').style.display = 'none';
             document.body.style.overflow = 'auto';
+            document.getElementById('addVehicleForm').reset();
         }
         
-        // Cerrar modal al hacer clic fuera del contenido
+        function showEditVehicleForm(placa, marca, modelo, color) {
+            document.getElementById('original_placa').value = placa;
+            document.getElementById('edit_placa').value = placa;
+            document.getElementById('edit_marca').value = marca;
+            document.getElementById('edit_modelo').value = modelo;
+            document.getElementById('edit_color').value = color;
+            document.getElementById('editVehicleModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function hideEditVehicleForm() {
+            document.getElementById('editVehicleModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        function deleteVehicle(placa) {
+            document.getElementById('deletePlate').textContent = placa;
+            document.getElementById('delete_placa').value = placa;
+            document.getElementById('deleteConfirmModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function hideDeleteConfirm() {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Cerrar modales al hacer clic fuera del contenido
         window.onclick = function(event) {
-            const modal = document.getElementById('addVehicleModal');
-            if (event.target == modal) {
+            const addModal = document.getElementById('addVehicleModal');
+            const editModal = document.getElementById('editVehicleModal');
+            const deleteModal = document.getElementById('deleteConfirmModal');
+            
+            if (event.target == addModal) {
                 hideAddVehicleForm();
+            }
+            if (event.target == editModal) {
+                hideEditVehicleForm();
+            }
+            if (event.target == deleteModal) {
+                hideDeleteConfirm();
             }
         }
         
