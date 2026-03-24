@@ -1,0 +1,94 @@
+# Archivo .dockerignore para Laravel_Admin
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Laravel specific
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Laravel storage (se montará como volumen)
+/storage/*
+!/storage/.gitkeep
+
+# Laravel cache
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
+
+# Laravel public compiled assets
+/public/hot
+/public/storage
+
+# Laravel logs
+/storage/logs/*.log
+
+# Laravel testing
+.phpunit.result.cache
+/Homestead.json
+/Homestead.yaml
+/npm/
+
+# Composer
+/vendor/
+composer.lock
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+/public/build
+/public/hot
+
+# Environment specific
+.env.backup
+.env.*.backup
+
+# Coverage
+coverage/
+
+# Documentation
+docs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+
+# Cache
+.cache/
+
+# Logs
+*.log
