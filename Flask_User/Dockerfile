@@ -7,6 +7,7 @@ WORKDIR /app
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     gcc \
+    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements.txt primero para aprovechar el cache de Docker
@@ -23,7 +24,8 @@ EXPOSE 5000
 
 # Variables de entorno
 ENV FLASK_APP=main.py
-ENV FLASK_ENV=production
+ENV FLASK_ENV=development
+ENV FLASK_DEBUG=1
 ENV PYTHONUNBUFFERED=1
 
 # Comando para ejecutar la aplicación

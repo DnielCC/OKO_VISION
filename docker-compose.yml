@@ -1,22 +1,4 @@
 services:
-  # Base de Datos MySQL
-  db:
-    image: mysql:8.0
-    container_name: oko_vision_db
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: oko_vision
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_PASSWORD: oko123
-      MYSQL_USER: oko_user
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/init:/docker-entrypoint-initdb.d
-    networks:
-      - oko_network
-
   # Aplicación Flask (Usuario)
   flask_user:
     build:
@@ -27,10 +9,8 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - FLASK_ENV=production
-      - DATABASE_URL=mysql+pymysql://oko_user:oko123@db:3306/oko_vision
-    depends_on:
-      - db
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
     volumes:
       - ./Flask_User:/app
     networks:
@@ -44,59 +24,17 @@ services:
     container_name: oko_vision_laravel
     restart: unless-stopped
     ports:
-      - "8000:80"
+      - "8001:8000"
     environment:
-      - DB_CONNECTION=mysql
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_DATABASE=oko_vision
-      - DB_USERNAME=oko_user
-      - DB_PASSWORD=oko123
-    depends_on:
-      - db
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/var/www/html/database/database.sqlite
     volumes:
       - ./Laravel_Admin:/var/www/html
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+    working_dir: /var/www/html
+    command: php artisan serve --host=0.0.0.0 --port=8000
     networks:
       - oko_network
 
-  # Servidor Nginx para Laravel
-  nginx:
-    image: nginx:alpine
-    container_name: oko_vision_nginx
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    volumes:
-      - ./Laravel_Admin:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - laravel_admin
-    networks:
-      - oko_network
-
-  # API Gateway (Futuro)
-  api_gateway:
-    image: node:18-alpine
-    container_name: oko_vision_api
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    working_dir: /app
-    volumes:
-      - ./API:/app
-    command: sh -c "npm install && npm start"
-    depends_on:
-      - db
-      - flask_user
-      - laravel_admin
-    networks:
-      - oko_network
-    profiles:
-      - api  # Solo se ejecuta con --profile api
-
-volumes:
-  mysql_data:
 
 networks:
   oko_network:
