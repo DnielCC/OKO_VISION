@@ -224,6 +224,14 @@
                     <i class="fas fa-chart-bar w-5"></i>
                     <span>Reportes</span>
                 </a>
+
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                    @csrf
+                    <button type="submit" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-red-400 w-full transition-colors duration-200">
+                        <i class="fas fa-sign-out-alt w-5"></i>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </form>
             </nav>
             
             <!-- User Profile -->

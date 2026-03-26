@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OKO VISION - Dashboard</title>
     <style>
+        :root {
+            --bg-primary: #0A0F1E;
+            --bg-secondary: #141E33;
+            --accent-cyan: #00D2FF;
+            --accent-blue: #0077EE;
+            --text-primary: #D1D9E6;
+            --text-secondary: #8A99AF;
+            --success: #00FF87;
+            --warning: #FFA500;
+            --danger: #FF5252;
+            --glass: rgba(20, 30, 51, 0.75);
+            --border: rgba(0, 210, 255, 0.15);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,327 +26,325 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #050A18 0%, #0D1B35 100%);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
             min-height: 100vh;
-            color: #E0E6ED;
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 2.5rem;
         }
         
         .header {
-            background: rgba(13, 27, 53, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 242, 255, 0.3);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 1.5rem 2.5rem;
+            margin-bottom: 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
         }
         
         .logo {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.2rem;
         }
-        
+
         .logo h1 {
-            color: #00F2FF;
-            font-size: 1.8rem;
-            text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+            color: var(--accent-cyan);
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
         }
         
-        .user-info {
+        .user-meta {
             text-align: right;
-        }
-        
-        .user-info h3 {
-            color: #E0E6ED;
-            margin-bottom: 0.5rem;
-        }
-        
-        .user-info p {
-            color: #9ca3af;
-            font-size: 0.9rem;
-        }
-        
-        .btn-logout {
-            background: rgba(255, 49, 49, 0.2);
-            border: 1px solid #FF3131;
-            color: #FF3131;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            margin-top: 0.5rem;
-            display: inline-block;
-        }
-        
-        .btn-logout:hover {
-            background: rgba(255, 49, 49, 0.3);
-            box-shadow: 0 0 15px rgba(255, 49, 49, 0.4);
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-        
-        .card {
-            background: rgba(13, 27, 53, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 242, 255, 0.3);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card h2 {
-            color: #00F2FF;
-            margin-bottom: 1.5rem;
-            font-size: 1.3rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 2rem;
+        }
+
+        .user-details h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
         }
         
-        .card h2 i {
-            font-size: 1.2rem;
-        }
-        
-        .profile-info {
-            display: grid;
-            gap: 1rem;
-        }
-        
-        .profile-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.8rem;
-            background: rgba(0, 242, 255, 0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(0, 242, 255, 0.2);
-        }
-        
-        .profile-item label {
-            color: #00F2FF;
+        .user-details p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
             font-weight: 500;
         }
         
-        .profile-item span {
-            color: #E0E6ED;
+        .btn-logout {
+            background: rgba(255, 82, 82, 0.08);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            color: var(--danger);
+            padding: 0.7rem 1.4rem;
+            border-radius: 14px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
         }
         
-        .qr-container {
-            text-align: center;
+        .btn-logout:hover {
+            background: var(--danger);
+            color: var(--bg-primary);
+            box-shadow: 0 8px 25px rgba(255, 82, 82, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 2.5rem;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(0, 210, 255, 0.4);
+            box-shadow: 0 30px 60px rgba(0, 210, 255, 0.15);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+        
+        .card h2 {
+            color: var(--accent-cyan);
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .profile-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            flex-grow: 1;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.2rem;
+            background: rgba(0, 210, 255, 0.04);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 210, 255, 0.08);
+            transition: all 0.3s;
+        }
+
+        .info-row:hover {
+            background: rgba(0, 210, 255, 0.08);
+            border-color: rgba(0, 210, 255, 0.2);
+        }
+        
+        .info-row label {
+            color: var(--accent-cyan);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-row span {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .qr-section {
+            background: rgba(0, 210, 255, 0.03);
+            border: 2px dashed rgba(0, 210, 255, 0.2);
+            border-radius: 24px;
             padding: 2rem;
-            background: rgba(0, 242, 255, 0.1);
-            border-radius: 12px;
-            border: 2px dashed rgba(0, 242, 255, 0.5);
-            margin: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            gap: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .qr-section:hover {
+            background: rgba(0, 210, 255, 0.06);
+            border-color: var(--accent-cyan);
         }
         
-        .qr-placeholder {
+        .qr-frame {
             width: 200px;
             height: 200px;
             background: #fff;
-            border-radius: 8px;
-            margin: 0 auto 1rem;
+            border-radius: 20px;
+            padding: 1.2rem;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
-            color: #333;
-            text-align: center;
-            padding: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
         
-        .btn-generate-qr {
-            background: linear-gradient(135deg, #00F2FF, #0080ff);
-            border: none;
-            color: #050A18;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: var(--bg-primary);
+            padding: 1rem 2.2rem;
+            border-radius: 16px;
+            font-weight: 800;
             text-decoration: none;
-            display: inline-block;
-            margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.9rem;
+            transition: all 0.4s;
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
+            border: none;
+            cursor: pointer;
         }
         
-        .btn-generate-qr:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(0, 242, 255, 0.4);
+        .btn-action:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 210, 255, 0.4);
         }
         
-        .vehicles-list {
-            display: grid;
-            gap: 1rem;
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            flex-grow: 1;
         }
         
-        .vehicle-item {
-            background: rgba(0, 242, 255, 0.1);
-            border: 1px solid rgba(0, 242, 255, 0.2);
-            border-radius: 8px;
-            padding: 1rem;
+        .item-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 1.2rem;
             display: grid;
             grid-template-columns: auto 1fr auto;
-            gap: 1rem;
+            gap: 1.5rem;
             align-items: center;
+            transition: all 0.3s;
+        }
+
+        .item-box:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(8px);
         }
         
-        .vehicle-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #00F2FF, #0080ff);
-            border-radius: 8px;
+        .icon-circle {
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #050A18;
-            font-size: 1.2rem;
+            color: var(--bg-primary);
+            font-size: 1.5rem;
+            box-shadow: 0 8px 15px rgba(0, 210, 255, 0.2);
         }
         
-        .vehicle-info h4 {
-            color: #E0E6ED;
-            margin-bottom: 0.3rem;
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex-grow: 1;
         }
-        
-        .vehicle-info p {
-            color: #9ca3af;
-            font-size: 0.9rem;
+
+        .history-item {
+            padding: 1.2rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 5px solid var(--accent-cyan);
+            border-radius: 0 20px 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
         }
-        
-        .add-vehicle {
-            background: rgba(0, 255, 135, 0.2);
-            border: 2px dashed #00FF87;
-            border-radius: 8px;
-            padding: 1.5rem;
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.01);
+        }
+
+        .history-item.entrada { border-left-color: var(--success); }
+        .history-item.salida { border-left-color: var(--warning); }
+
+        .footer-link {
             text-align: center;
-            color: #00FF87;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
+            margin-top: auto;
+            padding-top: 2rem;
         }
-        
-        .add-vehicle:hover {
-            background: rgba(0, 255, 135, 0.3);
-            box-shadow: 0 0 20px rgba(0, 255, 135, 0.4);
-        }
-        
-        .btn-manage-vehicles {
-            background: linear-gradient(135deg, #00F2FF, #0080ff);
-            border: none;
-            color: #050A18;
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
+
+        .footer-link a {
+            color: var(--accent-cyan);
             text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            transition: gap 0.3s;
         }
-        
-        .btn-manage-vehicles:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(0, 242, 255, 0.4);
+
+        .footer-link a:hover {
+            gap: 0.8rem;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
         }
-        
-        .access-history {
-            max-height: 300px;
-            overflow-y: auto;
+
+        @media (max-width: 1100px) {
+            .main-content { grid-template-columns: 1fr; grid-auto-rows: auto; }
         }
-        
-        .access-item {
-            background: rgba(0, 242, 255, 0.1);
-            border-left: 4px solid #00F2FF;
-            padding: 1rem;
-            margin-bottom: 0.8rem;
-            border-radius: 0 8px 8px 0;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 1rem;
-            align-items: center;
-        }
-        
-        .access-item.entrada {
-            border-left-color: #00FF87;
-        }
-        
-        .access-item.salida {
-            border-left-color: #FFA500;
-        }
-        
-        .access-info h4 {
-            color: #E0E6ED;
-            margin-bottom: 0.3rem;
-            font-size: 0.95rem;
-        }
-        
-        .access-info p {
-            color: #9ca3af;
-            font-size: 0.85rem;
-        }
-        
-        .access-time {
-            text-align: right;
-        }
-        
-        .access-time .time {
-            color: #00F2FF;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        
-        .access-time .type {
-            color: #9ca3af;
-            font-size: 0.8rem;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: #9ca3af;
-        }
-        
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-        
-        @media (max-width: 968px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .header {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
-            }
-            
-            .user-info {
-                text-align: center;
-            }
+
+        @media (max-width: 600px) {
+            .header { flex-direction: column; gap: 1.5rem; text-align: center; }
+            .user-meta { flex-direction: column; gap: 1rem; }
+            .container { padding: 1.2rem; }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -344,127 +356,85 @@
                 <i class="fas fa-eye" style="font-size: 2rem; color: #00F2FF;"></i>
                 <h1>OKO VISION</h1>
             </div>
-            <div class="user-info">
-                <h3>{{ user.nombre }}</h3>
-                <p>{{ user.matricula }}</p>
+            <div class="user-meta">
+                <div class="user-details">
+                    <h3>{{ user.nombre }}</h3>
+                    <p>{{ user.matricula }}</p>
+                </div>
                 <a href="{{ url_for('user.logout') }}" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    <i class="fas fa-power-off"></i> Salir
                 </a>
             </div>
         </header>
         
         <div class="main-content">
-            <!-- Perfil y QR -->
-            <div>
-                <div class="card">
-                    <h2><i class="fas fa-user"></i> Mi Perfil</h2>
-                    <div class="profile-info">
-                        <div class="profile-item">
-                            <label>Nombre:</label>
-                            <span>{{ user.nombre }}</span>
-                        </div>
-                        <div class="profile-item">
-                            <label>Matrícula:</label>
-                            <span>{{ user.matricula }}</span>
-                        </div>
-                        <div class="profile-item">
-                            <label>Estatus:</label>
-                            <span style="color: #00FF87;">Activo</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card" style="margin-top: 2rem;">
-                    <h2><i class="fas fa-qrcode"></i> QR de Acceso</h2>
-                    <div class="qr-container">
-                        <div class="qr-placeholder">
-                            <i class="fas fa-qrcode" style="font-size: 4rem; color: #333; margin-bottom: 1rem;"></i>
-                            <p>QR para {{ user.matricula }}</p>
-                        </div>
-                        <a href="{{ url_for('user.generar_qr') }}" class="btn-generate-qr">
-                            <i class="fas fa-download"></i> Generar QR
-                        </a>
-                    </div>
+            <!-- Mi Perfil -->
+            <div class="card">
+                <h2><i class="fas fa-id-card-alt"></i> Mi Perfil</h2>
+                <div class="profile-list">
+                    <div class="info-row"><label>Nombre</label><span>{{ user.nombre }}</span></div>
+                    <div class="info-row"><label>Matrícula</label><span>{{ user.matricula }}</span></div>
+                    <div class="info-row"><label>Estado</label><span style="color: var(--success);">Activo</span></div>
                 </div>
             </div>
-            
-            <!-- Vehículos y Accesos -->
-            <div>
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2><i class="fas fa-car"></i> Mis Vehículos</h2>
-                        <a href="{{ url_for('user.vehiculos') }}" class="btn-manage-vehicles">
-                            <i class="fas fa-cog"></i> Gestionar Vehículos
-                        </a>
+
+            <!-- Mis Vehículos -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                    <h2><i class="fas fa-car-side"></i> Vehículos</h2>
+                    <a href="{{ url_for('user.vehiculos') }}" class="btn-action" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;">Gestionar</a>
+                </div>
+                {% if vehiculos %}
+                    <div class="list-container">
+                        {% for vehicle in vehiculos %}
+                            <div class="item-box">
+                                <div class="icon-circle"><i class="fas fa-car"></i></div>
+                                <div>
+                                    <h4 style="font-size: 1.1rem; font-weight: 800;">{{ vehicle.placa }}</h4>
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem;">{{ vehicle.marca }} {{ vehicle.modelo }}</p>
+                                </div>
+                                <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i>
+                            </div>
+                        {% endfor %}
                     </div>
-                    {% if vehiculos %}
-                        <div class="vehicles-list">
-                            {% for vehicle in vehiculos %}
-                                <div class="vehicle-item">
-                                    <div class="vehicle-icon">
-                                        <i class="fas fa-car"></i>
-                                    </div>
-                                    <div class="vehicle-info">
-                                        <h4>{{ vehicle.placa }}</h4>
-                                        <p>{{ vehicle.marca }} {{ vehicle.modelo }} - {{ vehicle.color }}</p>
-                                    </div>
-                                    <div style="color: #00FF87; font-size: 0.9rem;">
-                                        <i class="fas fa-check-circle"></i> Activo
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        
-                        {% if vehiculos|length < 2 %}
-                            <div class="add-vehicle" onclick="window.location.href='{{ url_for('user.vehiculos') }}';">
-                                <i class="fas fa-plus-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
-                                <p>Agregar Vehículo</p>
-                                <small style="opacity: 0.8;">Máximo 2 vehículos permitidos</small>
-                            </div>
-                        {% endif %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-car"></i>
-                            <p>No tienes vehículos registrados</p>
-                            <div class="add-vehicle" onclick="window.location.href='{{ url_for('user.vehiculos') }}';" style="margin-top: 1rem;">
-                                <i class="fas fa-plus-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
-                                <p>Registrar Primer Vehículo</p>
-                            </div>
-                        </div>
-                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- QR de Acceso -->
+            <div class="card">
+                <h2><i class="fas fa-shield-halved"></i> Acceso Seguro</h2>
+                <div class="qr-section">
+                    <div class="qr-frame">
+                        <i class="fas fa-qrcode" style="font-size: 5rem; color: #222; margin-bottom: 0.5rem;"></i>
+                        <p style="color: #444; font-weight: 800; font-size: 0.75rem;">{{ user.matricula }}</p>
+                    </div>
+                    <a href="{{ url_for('user.generar_qr') }}" class="btn-action">Obtener Código QR</a>
                 </div>
-                
-                <div class="card" style="margin-top: 2rem;">
-                    <h2><i class="fas fa-history"></i> Historial de Accesos</h2>
-                    {% if accesos %}
-                        <div class="access-history">
-                            {% for acceso in accesos %}
-                                <div class="access-item {{ 'entrada' if acceso.tipo == 'Entrada' else 'salida' }}">
-                                    <div class="access-info">
-                                        <h4>{{ acceso.tipo }} - {{ acceso.placa }}</h4>
-                                        <p>{{ acceso.fecha }}</p>
-                                    </div>
-                                    <div class="access-time">
-                                        <div class="type">{{ acceso.tipo }}</div>
-                                        <div class="time" style="color: {{ '#00FF87' if acceso.estatus == 'Autorizado' else '#FFA500' }}">
-                                            {{ acceso.estatus }}
-                                        </div>
-                                    </div>
+            </div>
+
+            <!-- Historial -->
+            <div class="card">
+                <h2><i class="fas fa-clock-rotate-left"></i> Actividad</h2>
+                {% if accesos %}
+                    <div class="history-list">
+                        {% for acceso in accesos %}
+                            <div class="history-item {{ 'entrada' if acceso.tipo == 'Entrada' else 'salida' }}">
+                                <div>
+                                    <h4 style="font-size: 1rem; font-weight: 700;">{{ acceso.tipo }} - {{ acceso.placa }}</h4>
+                                    <p style="font-size: 0.8rem; color: var(--text-secondary);">{{ acceso.fecha }}</p>
                                 </div>
-                            {% endfor %}
-                        </div>
-                        <div style="text-align: center; margin-top: 1rem;">
-                            <a href="{{ url_for('user.historial') }}" style="color: #00F2FF; text-decoration: none;">
-                                Ver todo el historial <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-history"></i>
-                            <p>No hay registros de acceso</p>
-                        </div>
-                    {% endif %}
-                </div>
+                                <div style="text-align: right;">
+                                    <span style="display: block; font-size: 0.85rem; font-weight: 800; color: {{ '#00FF87' if acceso.estatus == 'Autorizado' else '#FFA500' }}">
+                                        {{ acceso.estatus }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="footer-link">
+                        <a href="{{ url_for('user.historial') }}">Ver historial completo <i class="fas fa-chevron-right"></i></a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

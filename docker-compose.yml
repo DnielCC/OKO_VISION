@@ -18,20 +18,19 @@ services:
 
   # Aplicación Laravel (Administrador)
   laravel_admin:
-    build:
-      context: ./Laravel_Admin
-      dockerfile: Dockerfile
+    build: ./Laravel_Admin
     container_name: oko_vision_laravel
-    restart: unless-stopped
     ports:
       - "8001:8000"
     environment:
       - DB_CONNECTION=sqlite
       - DB_DATABASE=/var/www/html/database/database.sqlite
+      - SESSION_DRIVER=file
+      - CACHE_STORE=file
+      - APP_DEBUG=true
     volumes:
       - ./Laravel_Admin:/var/www/html
     working_dir: /var/www/html
-    command: php artisan serve --host=0.0.0.0 --port=8000
     networks:
       - oko_network
 

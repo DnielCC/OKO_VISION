@@ -1,4 +1,4 @@
-# Dockerfile para aplicación Laravel_Admin
+# Dockerfile para aplicación Laravel_Admin optimizado
 FROM php:8.4-cli
 
 # Instalar dependencias del sistema
@@ -9,8 +9,18 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensiones de PHP básicas
-RUN docker-php-ext-install mbstring bcmath
+# Instalar extensiones de PHP básicas y opcache
+RUN docker-php-ext-install mbstring bcmath opcache
+
+# Configuración agresiva de Opcache para máxima velocidad
+RUN { \
+        echo 'opcache.memory_consumption=256'; \
+        echo 'opcache.interned_strings_buffer=16'; \
+        echo 'opcache.max_accelerated_files=20000'; \
+        echo 'opcache.revalidate_freq=0'; \
+        echo 'opcache.fast_shutdown=1'; \
+        echo 'opcache.enable_cli=1'; \
+    } > /usr/local/etc/php/conf.d/opcache-optimized.ini
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -18,27 +28,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Establecer el directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiar el código de la aplicación
-COPY . .
-
-# Instalar dependencias de PHP
-RUN composer install --no-dev --optimize-autoloader
-
-# Copiar archivo de configuración de Laravel
-RUN cp .env.example .env
-
-# Generar clave de aplicación
-RUN php artisan key:generate
-
-# Crear base de datos SQLite y configurar
-RUN touch database/database.sqlite
-
-# Dar permisos al directorio storage
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
 # Exponer el puerto
 EXPOSE 8000
 
-# Comando para ejecutar la aplicación
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Comando para ejecutar la aplicación con configuración estándar de desarrollo
+CMD php artisan migrate --force && \
+    php artisan serve --host=0.0.0.0 --port=8000
