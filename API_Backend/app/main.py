@@ -3,7 +3,7 @@ from app.data.db import engine, Base
 from app.data import database 
 from fastapi import FastAPI
 from app.data.db import engine, Base
-from app.router import auto, users
+from app.router import auto, users, access
 
 Base.metadata.create_all(bind=engine)
 
@@ -15,4 +15,8 @@ app = FastAPI(
 )
 
 app.include_router(users.router)
+app.include_router(users.router, prefix="/users", include_in_schema=False)
 app.include_router(auto.car)
+app.include_router(auto.car, prefix="/vehicles", include_in_schema=False)
+app.include_router(access.router)
+app.include_router(access.router, prefix="/access-logs", include_in_schema=False)

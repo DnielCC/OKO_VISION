@@ -3,13 +3,25 @@ from sqlalchemy.orm import Session
 from app.data.db import get_db
 from app.data.database import Usuario
 from app.models.user import UsuarioCreate, UsuarioUpdate
+from app.data.database import Usuario, Persona
 from app.security.auth import verify_user
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 @router.get("/")
 def get_all(db: Session = Depends(get_db)):
-    return db.query(Usuario).all()
+    # Unimos con Persona para obtener el email y nombre para el portal de usuario
+    results = db.query(Usuario, Persona).join(Persona, Usuario.id_persona == Persona.id).all()
+    output = []
+    for user, persona in results:
+        output.append({
+            "id": user.id,
+            "username": user.identificador,
+            "email": persona.mail,
+            "nombre": persona.nombre,
+            "apellidos": persona.apellidos
+        })
+    return output
 
 @router.get("/{usuario_id}")
 def get_one(usuario_id: int, db: Session = Depends(get_db)):

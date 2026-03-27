@@ -1,14 +1,31 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.data.db import get_db
-from app.data.database import Vehiculo
+from app.data.database import Vehiculo, PersonaVehiculo, Usuario
 from app.models.cars import VehiculoCreate, VehiculoUpdate
 
 car = APIRouter(prefix="/vehiculos", tags=["Vehiculos"])
 
 @car.get("/")
 def get_all(db: Session = Depends(get_db)):
-    return db.query(Vehiculo).all()
+    # Unimos con PersonaVehiculo y Usuario para obtener el owner_id (id del usuario)
+    results = db.query(Vehiculo, PersonaVehiculo, Usuario).join(
+        PersonaVehiculo, Vehiculo.id == PersonaVehiculo.id_vehiculo
+    ).join(
+        Usuario, PersonaVehiculo.id_persona == Usuario.id_persona
+    ).all()
+    
+    output = []
+    for v, pv, u in results:
+        output.append({
+            "id": v.id,
+            "plate": "N/A", # La nueva estructura no parece tener placa en Vehiculo
+            "brand": v.marca,
+            "model": v.modelo,
+            "color": v.color,
+            "owner_id": u.id
+        })
+    return output
 
 @car.get("/{vehiculo_id}")
 def get_one(vehiculo_id: int, db: Session = Depends(get_db)):

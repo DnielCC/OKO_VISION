@@ -11,11 +11,17 @@ API_URL = os.getenv("API_URL", "http://api_backend:8000")
 
 def get_api_data(endpoint):
     try:
-        response = requests.get(f"{API_URL}{endpoint}")
+        # Se agrega timeout de 5 segundos para evitar que la petición se quede cargando
+        response = requests.get(f"{API_URL}{endpoint}", timeout=5)
         if response.status_code == 200:
             return response.json()
+        print(f"API returned status {response.status_code} for {endpoint}")
+    except requests.exceptions.Timeout:
+        print(f"Timeout connecting to API at {API_URL}")
+        return "TIMEOUT"
     except Exception as e:
         print(f"Error connecting to API: {e}")
+        return "ERROR"
     return []
 
 def login_required(f):
@@ -40,7 +46,13 @@ def login():
         password = request.form.get('password')
         
         # Consultamos a la API para verificar el usuario por email
-        users = get_api_data("/users/")
+        # Corregido: El endpoint correcto es /usuarios/ según la configuración del Backend
+        users = get_api_data("/usuarios/")
+        
+        if users == "TIMEOUT" or users == "ERROR":
+            flash('Error de conexión con el servidor de seguridad. Por favor intente más tarde.', 'error')
+            return render_template('login.html')
+            
         # Buscamos por email específicamente, ya que el usuario indicó que son correos
         user = next((u for u in users if u['email'] == email), None)
         
@@ -67,10 +79,10 @@ def dashboard():
     user_id = session['user_id']
     
     # Obtener datos reales de la API
-    all_vehicles = get_api_data("/vehicles/")
+    all_vehicles = get_api_data("/vehiculos/")
     user_vehicles = [v for v in all_vehicles if v['owner_id'] == user_id]
     
-    all_access = get_api_data("/access-logs/")
+    all_access = get_api_data("/accesos/")
     user_access = [a for a in all_access if a['user_id'] == user_id][:5]
     
     user_info = {
@@ -115,7 +127,7 @@ def vehiculos():
         flash('Funcionalidad de actualización de base de datos activa vía API', 'success')
         return redirect(url_for('user.vehiculos'))
     
-    all_vehicles = get_api_data("/vehicles/")
+    all_vehicles = get_api_data("/vehiculos/")
     user_vehicles = [v for v in all_vehicles if v['owner_id'] == user_id]
     
     return render_template('vehiculos.html', user=user_info, vehiculos=user_vehicles)
@@ -129,7 +141,7 @@ def historial():
         'email': session['user_email']
     }
     
-    all_access = get_api_data("/access-logs/")
+    all_access = get_api_data("/accesos/")
     user_access = [a for a in all_access if a['user_id'] == user_id]
     
     return render_template('historial.html', user=user_info, accesos=user_access)
