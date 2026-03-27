@@ -89,9 +89,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-400 text-sm">Accesos Hoy</p>
-                        <p class="text-2xl font-bold text-white">247</p>
+                        <p class="text-2xl font-bold text-white">{{ $accesos_hoy }}</p>
                         <p class="text-green-400 text-sm mt-1">
-                            <i class="fas fa-arrow-up mr-1"></i>12% vs ayer
+                            <i class="fas fa-arrow-up mr-1"></i>En tiempo real
                         </p>
                     </div>
                     <div class="w-12 h-12 bg-green-400/20 rounded-lg flex items-center justify-center">
@@ -103,14 +103,14 @@
             <div class="card">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-400 text-sm">Alertas Activas</p>
-                        <p class="text-2xl font-bold text-white">3</p>
-                        <p class="text-yellow-400 text-sm mt-1">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>Revisión requerida
+                        <p class="text-gray-400 text-sm">Vehículos Registrados</p>
+                        <p class="text-2xl font-bold text-white">{{ $vehiculos_registrados }}</p>
+                        <p class="text-cyan-400 text-sm mt-1">
+                            <i class="fas fa-car mr-1"></i>Base de datos activa
                         </p>
                     </div>
-                    <div class="w-12 h-12 bg-yellow-400/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+                    <div class="w-12 h-12 bg-cyan-400/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-car text-cyan-400 text-xl"></i>
                     </div>
                 </div>
             </div>
@@ -118,145 +118,73 @@
             <div class="card">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-400 text-sm">Tasa Detección</p>
-                        <p class="text-2xl font-bold text-white">98.5%</p>
-                        <p class="text-cyan-400 text-sm mt-1">
-                            <i class="fas fa-chart-line mr-1"></i>Óptimo
+                        <p class="text-gray-400 text-sm">Alertas Activas</p>
+                        <p class="text-2xl font-bold text-white">{{ $alertas_activas }}</p>
+                        <p class="text-red-400 text-sm mt-1">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Requieren atención
                         </p>
                     </div>
-                    <div class="w-12 h-12 bg-cyan-400/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-brain text-cyan-400 text-xl"></i>
+                    <div class="w-12 h-12 bg-red-400/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-bell text-red-400 text-xl"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Recent Access Sidebar -->
-    <div class="lg:col-span-1">
+    <!-- Sidebar Sections -->
+    <div class="space-y-6 lg:col-span-1">
+        <!-- Recent Access Logs -->
         <div class="card">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-white">Últimos Accesos</h3>
-                <button class="text-cyan-400 hover:text-cyan-300 transition-colors">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
+            <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                <i class="fas fa-history mr-2 text-cyan-400"></i>
+                Últimos Accesos
+            </h3>
+            <div class="space-y-4">
+                @foreach($ultimos_accesos as $acceso)
+                <div class="flex items-center p-3 bg-gray-900/50 rounded-lg border border-gray-700">
+                    <div class="w-10 h-10 bg-cyan-400/10 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas {{ $acceso->access_type == 'ENTRY' ? 'fa-sign-in-alt text-green-400' : 'fa-sign-out-alt text-yellow-400' }}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-white">{{ $acceso->vehicle_plate }}</p>
+                        <p class="text-xs text-gray-400">{{ $acceso->access_time->format('H:i:s') }} - {{ $acceso->access_type }}</p>
+                    </div>
+                    @if($acceso->is_authorized)
+                        <span class="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">OK</span>
+                    @else
+                        <span class="text-xs text-red-400 bg-red-400/10 px-2 py-1 rounded">DENY</span>
+                    @endif
+                </div>
+                @endforeach
             </div>
-            
-            <div class="space-y-3 max-h-96 overflow-y-auto" id="recentAccess">
-                <!-- Access Record 1 -->
-                <div class="bg-gray-800/50 rounded-lg p-3 border-l-4 border-green-400">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2">
-                                <img src="https://via.placeholder.com/32x32/0D1B35/E0E6ED?text=JD" 
-                                     alt="User" 
-                                     class="w-8 h-8 rounded-full">
-                                <div>
-                                    <p class="text-white font-medium text-sm">Juan Díaz</p>
-                                    <p class="text-gray-400 text-xs">ABC-123</p>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="text-xs text-gray-400">Hace 2 min</span>
-                                <span class="badge-success">Autorizado</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Access Record 2 -->
-                <div class="bg-gray-800/50 rounded-lg p-3 border-l-4 border-yellow-400">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2">
-                                <img src="https://via.placeholder.com/32x32/0D1B35/E0E6ED?text=MG" 
-                                     alt="User" 
-                                     class="w-8 h-8 rounded-full">
-                                <div>
-                                    <p class="text-white font-medium text-sm">María García</p>
-                                    <p class="text-gray-400 text-xs">XYZ-789</p>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="text-xs text-gray-400">Hace 5 min</span>
-                                <span class="badge-warning">Pendiente</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Access Record 3 -->
-                <div class="bg-gray-800/50 rounded-lg p-3 border-l-4 border-green-400">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2">
-                                <img src="https://via.placeholder.com/32x32/0D1B35/E0E6ED?text=CR" 
-                                     alt="User" 
-                                     class="w-8 h-8 rounded-full">
-                                <div>
-                                    <p class="text-white font-medium text-sm">Carlos Rodríguez</p>
-                                    <p class="text-gray-400 text-xs">LMN-456</p>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="text-xs text-gray-400">Hace 8 min</span>
-                                <span class="badge-success">Autorizado</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Access Record 4 -->
-                <div class="bg-gray-800/50 rounded-lg p-3 border-l-4 border-red-400">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2">
-                                <img src="https://via.placeholder.com/32x32/0D1B35/E0E6ED?text=VS" 
-                                     alt="User" 
-                                     class="w-8 h-8 rounded-full">
-                                <div>
-                                    <p class="text-white font-medium text-sm">Visitante</p>
-                                    <p class="text-gray-400 text-xs">PQR-999</p>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="text-xs text-gray-400">Hace 12 min</span>
-                                <span class="badge-danger">Denegado</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Access Record 5 -->
-                <div class="bg-gray-800/50 rounded-lg p-3 border-l-4 border-green-400">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2">
-                                <img src="https://via.placeholder.com/32x32/0D1B35/E0E6ED?text=AL" 
-                                     alt="User" 
-                                     class="w-8 h-8 rounded-full">
-                                <div>
-                                    <p class="text-white font-medium text-sm">Ana López</p>
-                                    <p class="text-gray-400 text-xs">DEF-234</p>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="text-xs text-gray-400">Hace 15 min</span>
-                                <span class="badge-success">Autorizado</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- View All Button -->
-            <button class="w-full mt-4 btn-secondary text-sm">
-                Ver Todos los Accesos
-                <i class="fas fa-arrow-right ml-2"></i>
-            </button>
+            <a href="{{ route('reportes') }}" class="block text-center mt-4 text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
+                Ver historial completo
+            </a>
         </div>
         
+        <!-- Active Alerts -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                <i class="fas fa-exclamation-circle mr-2 text-red-400"></i>
+                Alertas Críticas
+            </h3>
+            <div class="space-y-4">
+                @foreach($ultimas_alertas as $alerta)
+                <div class="p-3 bg-red-400/5 border-l-4 {{ $alerta->severity == 'CRITICAL' ? 'border-red-500' : 'border-yellow-500' }} rounded-r-lg">
+                    <div class="flex justify-between items-start">
+                        <p class="text-sm font-semibold text-white">{{ $alerta->title }}</p>
+                        <span class="text-[10px] text-gray-400">{{ $alerta->created_at->diffForHumans() }}</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">{{ $alerta->description }}</p>
+                </div>
+                @endforeach
             </div>
+            <a href="{{ route('alertas') }}" class="block text-center mt-4 text-sm text-red-400 hover:text-red-300 transition-colors">
+                Ver todas las alertas
+            </a>
+        </div>
+    </div>
 </div>
 
 <!-- Activity Timeline -->

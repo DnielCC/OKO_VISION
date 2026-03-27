@@ -54,9 +54,9 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-400 text-sm">Total Usuarios</p>
-                <p class="text-2xl font-bold text-white">1,247</p>
+                <p class="text-2xl font-bold text-white">{{ count($usuarios) }}</p>
                 <p class="text-green-400 text-xs mt-1">
-                    <i class="fas fa-arrow-up mr-1"></i>8% este mes
+                    <i class="fas fa-check mr-1"></i>En tiempo real
                 </p>
             </div>
             <div class="w-12 h-12 bg-cyan-400/20 rounded-lg flex items-center justify-center">
@@ -68,336 +68,64 @@
     <div class="card">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-400 text-sm">Activos</p>
-                <p class="text-2xl font-bold text-green-400">1,189</p>
-                <p class="text-gray-400 text-xs mt-1">95.3% del total</p>
+                <p class="text-gray-400 text-sm">Administradores</p>
+                <p class="text-2xl font-bold text-green-400">{{ $usuarios->where('is_admin', true)->count() }}</p>
+                <p class="text-gray-400 text-xs mt-1">Acceso total</p>
             </div>
             <div class="w-12 h-12 bg-green-400/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-user-check text-green-400 text-xl"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-400 text-sm">Vehículos</p>
-                <p class="text-2xl font-bold text-white">2,156</p>
-                <p class="text-gray-400 text-xs mt-1">1.73 por usuario</p>
-            </div>
-            <div class="w-12 h-12 bg-blue-400/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-car text-blue-400 text-xl"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-400 text-sm"> Nuevos este mes</p>
-                <p class="text-2xl font-bold text-yellow-400">89</p>
-                <p class="text-gray-400 text-xs mt-1">En revisión</p>
-            </div>
-            <div class="w-12 h-12 bg-yellow-400/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-user-clock text-yellow-400 text-xl"></i>
+                <i class="fas fa-user-shield text-green-400 text-xl"></i>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Users Table -->
-<div class="card">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-white">Lista de Usuarios</h3>
-        <div class="flex items-center gap-2">
-            <button class="text-gray-400 hover:text-white transition-colors">
-                <i class="fas fa-th-large"></i>
-            </button>
-            <button class="text-cyan-400">
-                <i class="fas fa-list"></i>
-            </button>
-        </div>
-    </div>
-    
+<div class="card overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full table-custom">
+        <table class="w-full text-left border-collapse">
             <thead>
-                <tr>
-                    <th class="text-left py-3 px-4">Usuario</th>
-                    <th class="text-left py-3 px-4">Contacto</th>
-                    <th class="text-left py-3 px-4">Rol</th>
-                    <th class="text-left py-3 px-4">Vehículos</th>
-                    <th class="text-left py-3 px-4">Estado</th>
-                    <th class="text-left py-3 px-4">Registrado</th>
-                    <th class="text-left py-3 px-4">Acciones</th>
+                <tr class="border-b border-gray-700">
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">ID</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Usuario</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Email</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Rol</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Fecha Registro</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm text-right">Acciones</th>
                 </tr>
             </thead>
-            <tbody id="usersTableBody">
-                <!-- User 1 -->
-                <tr class="hover:bg-gray-800/50 transition-colors">
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-3">
-                            <img src="https://via.placeholder.com/40x40/0D1B35/E0E6ED?text=JD" 
-                                 alt="User" 
-                                 class="w-10 h-10 rounded-full">
-                            <div>
-                                <p class="text-white font-medium">Juan Díaz Martínez</p>
-                                <p class="text-gray-400 text-sm">ID: USR-001</p>
+            <tbody class="divide-y divide-gray-800">
+                @foreach($usuarios as $usuario)
+                <tr class="hover:bg-gray-800/30 transition-colors">
+                    <td class="px-6 py-4 text-gray-300 font-mono text-sm">{{ $usuario->id }}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-cyan-400/10 rounded-full flex items-center justify-center mr-3 text-cyan-400 font-bold">
+                                {{ substr($usuario->username, 0, 1) }}
                             </div>
+                            <span class="text-white font-medium">{{ $usuario->username }}</span>
                         </div>
                     </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">juan.diaz@email.com</p>
-                            <p class="text-gray-400 text-sm">+52 55 1234 5678</p>
-                        </div>
+                    <td class="px-6 py-4 text-gray-400 text-sm">{{ $usuario->email }}</td>
+                    <td class="px-6 py-4">
+                        @if($usuario->is_admin)
+                            <span class="bg-cyan-400/10 text-cyan-400 text-[10px] px-2 py-1 rounded-full border border-cyan-400/20 uppercase font-bold">Admin</span>
+                        @else
+                            <span class="bg-gray-700 text-gray-400 text-[10px] px-2 py-1 rounded-full border border-gray-600 uppercase font-bold">Usuario</span>
+                        @endif
                     </td>
-                    <td class="py-3 px-4">
-                        <span class="bg-purple-400/20 text-purple-400 px-2 py-1 rounded-full text-xs font-semibold">
-                            Administrador
-                        </span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="space-y-1">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-white text-sm">ABC-123</span>
-                                <span class="badge-success">Activo</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-white text-sm">XYZ-789</span>
-                                <span class="badge-success">Activo</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="badge-success">Activo</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">15/01/2026</p>
-                            <p class="text-gray-400 text-xs">Hace 30 días</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-2">
-                            <button onclick="editUser('USR-001')" class="text-cyan-400 hover:text-cyan-300 transition-colors">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="viewUser('USR-001')" class="text-blue-400 hover:text-blue-300 transition-colors">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="suspendUser('USR-001')" class="text-yellow-400 hover:text-yellow-300 transition-colors">
-                                <i class="fas fa-pause"></i>
-                            </button>
-                            <button onclick="deleteUser('USR-001')" class="text-red-400 hover:text-red-300 transition-colors">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                    <td class="px-6 py-4 text-gray-400 text-sm">{{ $usuario->created_at ? $usuario->created_at->format('d/m/Y') : 'N/A' }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-gray-400 hover:text-cyan-400 transition-colors mr-3">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-400 transition-colors">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </td>
                 </tr>
-                
-                <!-- User 2 -->
-                <tr class="hover:bg-gray-800/50 transition-colors">
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-3">
-                            <img src="https://via.placeholder.com/40x40/0D1B35/E0E6ED?text=MG" 
-                                 alt="User" 
-                                 class="w-10 h-10 rounded-full">
-                            <div>
-                                <p class="text-white font-medium">María García López</p>
-                                <p class="text-gray-400 text-sm">ID: USR-002</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">maria.garcia@email.com</p>
-                            <p class="text-gray-400 text-sm">+52 55 2345 6789</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="bg-blue-400/20 text-blue-400 px-2 py-1 rounded-full text-xs font-semibold">
-                            Operador
-                        </span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="space-y-1">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-white text-sm">DEF-456</span>
-                                <span class="badge-success">Activo</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="badge-success">Activo</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">20/01/2026</p>
-                            <p class="text-gray-400 text-xs">Hace 25 días</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-2">
-                            <button onclick="editUser('USR-002')" class="text-cyan-400 hover:text-cyan-300 transition-colors">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="viewUser('USR-002')" class="text-blue-400 hover:text-blue-300 transition-colors">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="suspendUser('USR-002')" class="text-yellow-400 hover:text-yellow-300 transition-colors">
-                                <i class="fas fa-pause"></i>
-                            </button>
-                            <button onclick="deleteUser('USR-002')" class="text-red-400 hover:text-red-300 transition-colors">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                
-                <!-- User 3 -->
-                <tr class="hover:bg-gray-800/50 transition-colors">
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-3">
-                            <img src="https://via.placeholder.com/40x40/0D1B35/E0E6ED?text=CR" 
-                                 alt="User" 
-                                 class="w-10 h-10 rounded-full">
-                            <div>
-                                <p class="text-white font-medium">Carlos Rodríguez Silva</p>
-                                <p class="text-gray-400 text-sm">ID: USR-003</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">carlos.rodriguez@email.com</p>
-                            <p class="text-gray-400 text-sm">+52 55 3456 7890</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="bg-gray-400/20 text-gray-400 px-2 py-1 rounded-full text-xs font-semibold">
-                            Usuario
-                        </span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="space-y-1">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-white text-sm">GHI-789</span>
-                                <span class="badge-success">Activo</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-white text-sm">JKL-012</span>
-                                <span class="badge-warning">Pendiente</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="badge-success">Activo</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">10/02/2026</p>
-                            <p class="text-gray-400 text-xs">Hace 5 días</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-2">
-                            <button onclick="editUser('USR-003')" class="text-cyan-400 hover:text-cyan-300 transition-colors">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="viewUser('USR-003')" class="text-blue-400 hover:text-blue-300 transition-colors">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="suspendUser('USR-003')" class="text-yellow-400 hover:text-yellow-300 transition-colors">
-                                <i class="fas fa-pause"></i>
-                            </button>
-                            <button onclick="deleteUser('USR-003')" class="text-red-400 hover:text-red-300 transition-colors">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                
-                <!-- User 4 - Suspended -->
-                <tr class="hover:bg-gray-800/50 transition-colors">
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-3">
-                            <img src="https://via.placeholder.com/40x40/0D1B35/E0E6ED?text=AL" 
-                                 alt="User" 
-                                 class="w-10 h-10 rounded-full">
-                            <div>
-                                <p class="text-white font-medium">Ana López Torres</p>
-                                <p class="text-gray-400 text-sm">ID: USR-004</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">ana.lopez@email.com</p>
-                            <p class="text-gray-400 text-sm">+52 55 4567 8901</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="bg-gray-400/20 text-gray-400 px-2 py-1 rounded-full text-xs font-semibold">
-                            Usuario
-                        </span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="space-y-1">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-white text-sm">MNO-345</span>
-                                <span class="badge-danger">Suspendido</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="badge-warning">Suspendido</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="text-white text-sm">05/01/2026</p>
-                            <p class="text-gray-400 text-xs">Hace 40 días</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="flex items-center space-x-2">
-                            <button onclick="editUser('USR-004')" class="text-cyan-400 hover:text-cyan-300 transition-colors">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="viewUser('USR-004')" class="text-blue-400 hover:text-blue-300 transition-colors">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="activateUser('USR-004')" class="text-green-400 hover:text-green-300 transition-colors">
-                                <i class="fas fa-play"></i>
-                            </button>
-                            <button onclick="deleteUser('USR-004')" class="text-red-400 hover:text-red-300 transition-colors">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                @endforeach
             </tbody>
         </table>
-    </div>
-    
-    <!-- Pagination -->
-    <div class="flex items-center justify-between mt-6">
-        <div class="text-sm text-gray-400">
-            Mostrando <span class="text-white">1-4</span> de <span class="text-white">1,247</span> usuarios
-        </div>
-        <div class="flex items-center space-x-2">
-            <button class="px-3 py-1 text-gray-400 hover:text-white transition-colors">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="px-3 py-1 bg-cyan-400 text-black rounded font-medium">1</button>
-            <button class="px-3 py-1 text-gray-400 hover:text-white transition-colors">2</button>
-            <button class="px-3 py-1 text-gray-400 hover:text-white transition-colors">3</button>
-            <span class="px-2 text-gray-600">...</span>
-            <button class="px-3 py-1 text-gray-400 hover:text-white transition-colors">312</button>
-            <button class="px-3 py-1 text-gray-400 hover:text-white transition-colors">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
     </div>
 </div>
 

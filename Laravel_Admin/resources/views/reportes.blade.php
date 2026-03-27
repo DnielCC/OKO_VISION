@@ -67,9 +67,9 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-400 text-sm">Total Accesos</p>
-                <p class="text-2xl font-bold text-white">8,456</p>
+                <p class="text-2xl font-bold text-white">{{ $accesos->count() }}</p>
                 <p class="text-green-400 text-xs mt-1">
-                    <i class="fas fa-arrow-up mr-1"></i>15.3% vs período anterior
+                    <i class="fas fa-check mr-1"></i>En tiempo real
                 </p>
             </div>
             <div class="w-12 h-12 bg-cyan-400/20 rounded-lg flex items-center justify-center">
@@ -77,27 +77,48 @@
             </div>
         </div>
     </div>
-    
-    <div class="card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-400 text-sm">Usuarios Activos</p>
-                <p class="text-2xl font-bold text-white">1,247</p>
-                <p class="text-green-400 text-xs mt-1">
-                    <i class="fas fa-arrow-up mr-1"></i>8.2% crecimiento
-                </p>
-            </div>
-            <div class="w-12 h-12 bg-green-400/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-users text-green-400 text-xl"></i>
-            </div>
-        </div>
+</div>
+
+<!-- Access Logs Table -->
+<div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">ID</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Usuario</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Vehículo</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Tipo</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Fecha/Hora</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Estado</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                @foreach($accesos as $acceso)
+                <tr class="hover:bg-gray-800/30 transition-colors">
+                    <td class="px-6 py-4 text-gray-300 font-mono text-sm">{{ $acceso->id }}</td>
+                    <td class="px-6 py-4 text-white">{{ $acceso->user ? $acceso->user->username : 'Desconocido' }}</td>
+                    <td class="px-6 py-4 text-cyan-400 font-mono">{{ $acceso->vehicle_plate }}</td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs {{ $acceso->access_type == 'ENTRY' ? 'text-green-400' : 'text-yellow-400' }}">
+                            <i class="fas {{ $acceso->access_type == 'ENTRY' ? 'fa-sign-in-alt' : 'fa-sign-out-alt' }} mr-1"></i>
+                            {{ $acceso->access_type }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-400 text-sm">{{ $acceso->access_time->format('d/m/Y H:i:s') }}</td>
+                    <td class="px-6 py-4">
+                        @if($acceso->is_authorized)
+                            <span class="bg-green-400/10 text-green-400 text-[10px] px-2 py-1 rounded-full border border-green-400/20 uppercase font-bold">Autorizado</span>
+                        @else
+                            <span class="bg-red-400/10 text-red-400 text-[10px] px-2 py-1 rounded-full border border-red-400/20 uppercase font-bold">Denegado</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
-    
-    <div class="card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-400 text-sm">Alertas Críticas</p>
-                <p class="text-2xl font-bold text-red-400">47</p>
+</div>
                 <p class="text-red-400 text-xs mt-1">
                     <i class="fas fa-arrow-up mr-1"></i>23% más que el mes pasado
                 </p>

@@ -1,4 +1,38 @@
 services:
+  # Base de Datos PostgreSQL
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: oko_vision_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=oko_admin
+      - POSTGRES_PASSWORD=oko_password
+      - POSTGRES_DB=oko_vision
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - oko_network
+
+  # API Backend (FastAPI)
+  api_backend:
+    build:
+      context: ./API_Backend
+      dockerfile: Dockerfile
+    container_name: oko_vision_api
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://oko_admin:oko_password@postgres_db:5432/oko_vision
+    volumes:
+      - ./API_Backend:/app
+    depends_on:
+      - postgres_db
+    networks:
+      - oko_network
+
   # Aplicación Flask (Usuario)
   flask_user:
     build:
@@ -11,6 +45,7 @@ services:
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
+      - API_URL=http://api_backend:8000
     volumes:
       - ./Flask_User:/app
     networks:
@@ -23,14 +58,18 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/var/www/html/database/database.sqlite
-      - SESSION_DRIVER=file
-      - CACHE_STORE=file
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+      - DB_DATABASE=oko_admin
+      - DB_USERNAME=oko_admin
+      - DB_PASSWORD=oko_password
+      - PHP_CLI_SERVER_WORKERS=8
       - APP_DEBUG=true
-    volumes:
-      - ./Laravel_Admin:/var/www/html
-    working_dir: /var/www/html
+      - SESSION_DRIVER=cookie
+      - APP_KEY=base64:FaBcBKAnX5hFuBM1O4B67bVHVTQRZr/iLem9jkeFG5U=
+    depends_on:
+      - postgres_db
     networks:
       - oko_network
 
@@ -38,3 +77,6 @@ services:
 networks:
   oko_network:
     driver: bridge
+
+volumes:
+  postgres_data:

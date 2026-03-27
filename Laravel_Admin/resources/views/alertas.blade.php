@@ -49,8 +49,8 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-400 text-sm">Total Alertas</p>
-                <p class="text-2xl font-bold text-white">156</p>
-                <p class="text-gray-400 text-xs mt-1">Últimas 24h</p>
+                <p class="text-2xl font-bold text-white">{{ $alertas->count() }}</p>
+                <p class="text-gray-400 text-xs mt-1">En sistema</p>
             </div>
             <div class="w-12 h-12 bg-red-400/20 rounded-lg flex items-center justify-center">
                 <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
@@ -62,7 +62,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-400 text-sm">Críticas</p>
-                <p class="text-2xl font-bold text-red-400">8</p>
+                <p class="text-2xl font-bold text-red-400">{{ $alertas->where('severity', 'CRITICAL')->count() }}</p>
                 <p class="text-red-400 text-xs mt-1">Requieren acción</p>
             </div>
             <div class="w-12 h-12 bg-red-400/20 rounded-lg flex items-center justify-center">
@@ -75,7 +75,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-400 text-sm">Pendientes</p>
-                <p class="text-2xl font-bold text-yellow-400">23</p>
+                <p class="text-2xl font-bold text-yellow-400">{{ $alertas->where('is_resolved', false)->count() }}</p>
                 <p class="text-yellow-400 text-xs mt-1">Por validar</p>
             </div>
             <div class="w-12 h-12 bg-yellow-400/20 rounded-lg flex items-center justify-center">
@@ -88,13 +88,65 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-400 text-sm">Resueltas</p>
-                <p class="text-2xl font-bold text-green-400">125</p>
+                <p class="text-2xl font-bold text-green-400">{{ $alertas->where('is_resolved', true)->count() }}</p>
                 <p class="text-green-400 text-xs mt-1">80.1% del total</p>
             </div>
             <div class="w-12 h-12 bg-green-400/20 rounded-lg flex items-center justify-center">
                 <i class="fas fa-check-circle text-green-400 text-xl"></i>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Alerts Table -->
+<div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Gravedad</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Título</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Descripción</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Fecha</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Estado</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                @foreach($alertas as $alerta)
+                <tr class="hover:bg-gray-800/30 transition-colors">
+                    <td class="px-6 py-4">
+                        @if($alerta->severity == 'CRITICAL')
+                            <span class="bg-red-400/10 text-red-400 text-[10px] px-2 py-1 rounded-full border border-red-400/20 uppercase font-bold">Crítica</span>
+                        @elseif($alerta->severity == 'HIGH')
+                            <span class="bg-orange-400/10 text-orange-400 text-[10px] px-2 py-1 rounded-full border border-orange-400/20 uppercase font-bold">Alta</span>
+                        @else
+                            <span class="bg-yellow-400/10 text-yellow-400 text-[10px] px-2 py-1 rounded-full border border-yellow-400/20 uppercase font-bold">{{ $alerta->severity }}</span>
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 text-white font-medium">{{ $alerta->title }}</td>
+                    <td class="px-6 py-4 text-gray-400 text-sm">{{ $alerta->description }}</td>
+                    <td class="px-6 py-4 text-gray-400 text-sm">{{ $alerta->created_at->format('d/m/Y H:i') }}</td>
+                    <td class="px-6 py-4">
+                        @if($alerta->is_resolved)
+                            <span class="text-green-400 text-xs flex items-center">
+                                <i class="fas fa-check-circle mr-1"></i> Resuelta
+                            </span>
+                        @else
+                            <span class="text-yellow-400 text-xs flex items-center">
+                                <i class="fas fa-clock mr-1"></i> Pendiente
+                            </span>
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-gray-400 hover:text-cyan-400 transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
 

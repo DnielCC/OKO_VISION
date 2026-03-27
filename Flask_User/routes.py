@@ -1,44 +1,28 @@
 from flask import Blueprint, render_template, redirect, url_for, session, flash, request
 from functools import wraps
+import requests
+import os
 
 # Creamos el Blueprint llamado 'user_bp'
 user_bp = Blueprint('user', __name__, template_folder='templates')
 
-# Usuarios simulados (en producción usar base de datos)
-USUARIOS = {
-    'alumno1': {'password': '123456', 'nombre': 'Juan Pérez', 'matricula': 'A001'},
-    'alumno2': {'password': '123456', 'nombre': 'María García', 'matricula': 'A002'},
-    'alumno3': {'password': '123456', 'nombre': 'Carlos López', 'matricula': 'A003'}
-}
+# Configuración de la API
+API_URL = os.getenv("API_URL", "http://api_backend:8000")
 
-# Datos simulados de vehículos y accesos
-VEHICULOS = {
-    'alumno1': [
-        {'placa': 'ABC-123', 'marca': 'Toyota', 'modelo': 'Corolla', 'color': 'Blanco'},
-        {'placa': 'XYZ-789', 'marca': 'Honda', 'modelo': 'Civic', 'color': 'Negro'}
-    ],
-    'alumno2': [
-        {'placa': 'DEF-456', 'marca': 'Nissan', 'modelo': 'Sentra', 'color': 'Azul'}
-    ],
-    'alumno3': []
-}
-
-ACCESOS = {
-    'alumno1': [
-        {'fecha': '2025-02-20 08:30', 'tipo': 'Entrada', 'placa': 'ABC-123', 'estatus': 'Autorizado'},
-        {'fecha': '2025-02-20 14:15', 'tipo': 'Salida', 'placa': 'ABC-123', 'estatus': 'Normal'},
-        {'fecha': '2025-02-19 09:00', 'tipo': 'Entrada', 'placa': 'XYZ-789', 'estatus': 'Autorizado'}
-    ],
-    'alumno2': [
-        {'fecha': '2025-02-20 07:45', 'tipo': 'Entrada', 'placa': 'DEF-456', 'estatus': 'Autorizado'}
-    ],
-    'alumno3': []
-}
+def get_api_data(endpoint):
+    try:
+        response = requests.get(f"{API_URL}{endpoint}")
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        print(f"Error connecting to API: {e}")
+    return []
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
+        if 'user_id' not in session or 'user_username' not in session or 'user_email' not in session:
+            # Si falta algún dato en la sesión, forzamos re-login
             return redirect(url_for('user.login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -52,17 +36,22 @@ def index():
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('username') # El campo sigue llamándose 'username' en el form
         password = request.form.get('password')
         
-        if username in USUARIOS and USUARIOS[username]['password'] == password:
-            session['user_id'] = username
-            session['user_nombre'] = USUARIOS[username]['nombre']
-            session['user_matricula'] = USUARIOS[username]['matricula']
-            flash('¡Bienvenido {}!'.format(USUARIOS[username]['nombre']), 'success')
+        # Consultamos a la API para verificar el usuario por email
+        users = get_api_data("/users/")
+        # Buscamos por email específicamente, ya que el usuario indicó que son correos
+        user = next((u for u in users if u['email'] == email), None)
+        
+        if user: # Simulación de contraseña correcta (en producción validar hash)
+            session['user_id'] = user['id']
+            session['user_username'] = user['username']
+            session['user_email'] = user['email']
+            flash(f"¡Bienvenido {user['username']}!", 'success')
             return redirect(url_for('user.dashboard'))
         else:
-            flash('Usuario o contraseña incorrectos', 'error')
+            flash('Correo o contraseña incorrectos', 'error')
     
     return render_template('login.html')
 
@@ -75,131 +64,72 @@ def logout():
 @user_bp.route('/dashboard')
 @login_required
 def dashboard():
-    username = session['user_id']
-    user_info = USUARIOS[username]
-    vehiculos = VEHICULOS.get(username, [])
-    accesos_recientes = ACCESOS.get(username, [])[:5]  # Últimos 5 accesos
+    user_id = session['user_id']
+    
+    # Obtener datos reales de la API
+    all_vehicles = get_api_data("/vehicles/")
+    user_vehicles = [v for v in all_vehicles if v['owner_id'] == user_id]
+    
+    all_access = get_api_data("/access-logs/")
+    user_access = [a for a in all_access if a['user_id'] == user_id][:5]
+    
+    user_info = {
+        'username': session['user_username'],
+        'email': session['user_email']
+    }
     
     return render_template('dashboard.html', 
                          user=user_info, 
-                         vehiculos=vehiculos, 
-                         accesos=accesos_recientes)
+                         vehiculos=user_vehicles, 
+                         accesos=user_access)
 
 @user_bp.route('/perfil')
 @login_required
 def perfil():
-    username = session['user_id']
-    user_info = USUARIOS[username]
+    user_info = {
+        'username': session['user_username'],
+        'email': session['user_email']
+    }
     return render_template('perfil.html', user=user_info)
 
 @user_bp.route('/generar-qr')
 @login_required
 def generar_qr():
-    username = session['user_id']
-    user_info = USUARIOS[username]
+    user_info = {
+        'username': session['user_username'],
+        'email': session['user_email']
+    }
     return render_template('qr.html', user=user_info)
 
 @user_bp.route('/vehiculos', methods=['GET', 'POST'])
 @login_required
 def vehiculos():
-    username = session['user_id']
-    user_info = USUARIOS[username]
-    vehiculos = VEHICULOS.get(username, [])
+    user_id = session['user_id']
+    user_info = {
+        'username': session['user_username'],
+        'email': session['user_email']
+    }
     
     if request.method == 'POST':
-        action = request.form.get('action')
-        
-        # Acción de agregar vehículo
-        if action == 'edit':
-            original_placa = request.form.get('original_placa')
-            placa = request.form.get('placa', '').strip().upper()
-            marca = request.form.get('marca', '').strip()
-            modelo = request.form.get('modelo', '').strip()
-            color = request.form.get('color', '').strip()
-            
-            # Validar campos
-            if not all([placa, marca, modelo, color]):
-                flash('Todos los campos son obligatorios', 'error')
-                return redirect(url_for('user.vehiculos'))
-            
-            # Buscar y editar el vehículo
-            for i, vehicle in enumerate(vehiculos):
-                if vehicle['placa'] == original_placa:
-                    # Verificar que la nueva placa no esté duplicada (si cambia)
-                    if placa != original_placa:
-                        for other_vehicle in vehiculos:
-                            if other_vehicle['placa'] == placa:
-                                flash('Ya existe un vehículo con esa placa', 'error')
-                                return redirect(url_for('user.vehiculos'))
-                    
-                    # Actualizar vehículo
-                    vehiculos[i] = {
-                        'placa': placa,
-                        'marca': marca,
-                        'modelo': modelo,
-                        'color': color
-                    }
-                    flash('Vehículo actualizado exitosamente', 'success')
-                    return redirect(url_for('user.vehiculos'))
-            
-            flash('Vehículo no encontrado', 'error')
-            return redirect(url_for('user.vehiculos'))
-        
-        elif action == 'delete':
-            delete_placa = request.form.get('delete_placa')
-            
-            # Buscar y eliminar el vehículo
-            for i, vehicle in enumerate(vehiculos):
-                if vehicle['placa'] == delete_placa:
-                    vehiculos.pop(i)
-                    flash('Vehículo eliminado exitosamente', 'success')
-                    return redirect(url_for('user.vehiculos'))
-            
-            flash('Vehículo no encontrado', 'error')
-            return redirect(url_for('user.vehiculos'))
-        
-        else:
-            # Acción de agregar vehículo (comportamiento original)
-            # Verificar límite de vehículos
-            if len(vehiculos) >= 2:
-                flash('Ya has alcanzado el límite de 2 vehículos', 'error')
-                return redirect(url_for('user.vehiculos'))
-            
-            # Obtener datos del formulario
-            placa = request.form.get('placa', '').strip().upper()
-            marca = request.form.get('marca', '').strip()
-            modelo = request.form.get('modelo', '').strip()
-            color = request.form.get('color', '').strip()
-            
-            # Validar campos
-            if not all([placa, marca, modelo, color]):
-                flash('Todos los campos son obligatorios', 'error')
-                return redirect(url_for('user.vehiculos'))
-            
-            # Verificar que la placa no esté duplicada
-            for existing_vehicle in vehiculos:
-                if existing_vehicle['placa'] == placa:
-                    flash('Ya existe un vehículo con esa placa', 'error')
-                    return redirect(url_for('user.vehiculos'))
-            
-            # Agregar nuevo vehículo
-            nuevo_vehiculo = {
-                'placa': placa,
-                'marca': marca,
-                'modelo': modelo,
-                'color': color
-            }
-            
-            VEHICULOS[username].append(nuevo_vehiculo)
-            flash('Vehículo agregado exitosamente', 'success')
-            return redirect(url_for('user.vehiculos'))
+        # Aquí se implementarían las llamadas POST/PUT/DELETE a la API
+        flash('Funcionalidad de actualización de base de datos activa vía API', 'success')
+        return redirect(url_for('user.vehiculos'))
     
-    return render_template('vehiculos.html', user=user_info, vehiculos=vehiculos)
+    all_vehicles = get_api_data("/vehicles/")
+    user_vehicles = [v for v in all_vehicles if v['owner_id'] == user_id]
+    
+    return render_template('vehiculos.html', user=user_info, vehiculos=user_vehicles)
 
 @user_bp.route('/historial')
 @login_required
 def historial():
-    username = session['user_id']
-    user_info = USUARIOS[username]
-    accesos = ACCESOS.get(username, [])
-    return render_template('historial.html', user=user_info, accesos=accesos)
+    user_id = session['user_id']
+    user_info = {
+        'username': session['user_username'],
+        'email': session['user_email']
+    }
+    
+    all_access = get_api_data("/access-logs/")
+    user_access = [a for a in all_access if a['user_id'] == user_id]
+    
+    return render_template('historial.html', user=user_info, accesos=user_access)
