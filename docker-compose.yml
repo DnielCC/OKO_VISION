@@ -61,7 +61,7 @@ services:
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres_db
       - DB_PORT=5432
-      - DB_DATABASE=oko_admin
+      - DB_DATABASE=oko_vision
       - DB_USERNAME=oko_admin
       - DB_PASSWORD=oko_password
       - PHP_CLI_SERVER_WORKERS=8

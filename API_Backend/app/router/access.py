@@ -1,7 +1,19 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.data.db import get_db
-from app.data.database import Acceso, Persona
+from app.data.database import Acceso, Persona, Puerta, Dispositivo
+from pydantic import BaseModel
+from typing import Optional
+
+class AccesoCreate(BaseModel):
+    id_persona: int
+    id_vehiculo: Optional[int] = None
+    id_puerta: int
+    id_dispositivo: int
+    tipo_acceso: str
+    resultado: str
+    metodo: str
+    autoriza: Optional[int] = None
 
 router = APIRouter(prefix="/accesos", tags=["Accesos"])
 
@@ -20,3 +32,11 @@ def get_all(db: Session = Depends(get_db)):
             "is_authorized": True if access.resultado == 'p' else False
         })
     return output
+
+@router.post("/")
+def create(data: AccesoCreate, db: Session = Depends(get_db)):
+    nuevo = Acceso(**data.model_dump())
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo

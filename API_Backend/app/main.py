@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from app.data.db import engine, Base 
 from app.data import database 
-from fastapi import FastAPI
-from app.data.db import engine, Base
 from app.router import auto, users, access
 
 Base.metadata.create_all(bind=engine)
@@ -13,6 +11,10 @@ app = FastAPI(
     description = "OKO VISION - CONTROL DE ACCESOS",
     version = "1.0.0"
 )
+
+@app.get("/")
+def root():
+    return {"message": "OKO VISION API is running", "status": "active"}
 
 app.include_router(users.router)
 app.include_router(users.router, prefix="/users", include_in_schema=False)

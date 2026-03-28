@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Add current directory to Python path
+ENV PYTHONPATH=/app
+
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \

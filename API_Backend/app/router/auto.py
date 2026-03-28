@@ -13,7 +13,7 @@ def get_all(db: Session = Depends(get_db)):
         PersonaVehiculo, Vehiculo.id == PersonaVehiculo.id_vehiculo
     ).join(
         Usuario, PersonaVehiculo.id_persona == Usuario.id_persona
-    ).all()
+    ).distinct().all()
     
     output = []
     for v, pv, u in results:
