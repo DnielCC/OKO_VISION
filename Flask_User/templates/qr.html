@@ -169,6 +169,50 @@
             .container { grid-template-columns: 1fr; padding-top: 6rem; }
             .back-btn { top: 1.5rem; }
         }
+        
+        @media print {
+            @page { size: auto; margin: 10mm; }
+            body {
+                background: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .back-btn,
+            .instructions,
+            .btn-print {
+                display: none !important;
+            }
+            .container {
+                display: block !important;
+                max-width: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .qr-card {
+                background: #fff !important;
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+                padding: 8mm !important;
+                width: 85mm !important;
+                margin: 0 auto !important;
+            }
+            .qr-wrapper {
+                margin: 0 auto 8mm auto !important;
+                padding: 0.5rem !important;
+                background: #fff !important;
+                border-radius: 6px !important;
+            }
+            .qr-placeholder {
+                width: 180px !important;
+                height: 180px !important;
+            }
+            .qr-card strong {
+                font-size: 12pt !important;
+            }
+            .qr-card p {
+                font-size: 9pt !important;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>

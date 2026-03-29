@@ -371,10 +371,29 @@
             <!-- Mi Perfil -->
             <div class="card">
                 <h2><i class="fas fa-id-card-alt"></i> Mi Perfil</h2>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div style="width:100%; margin-bottom: 1rem;">
+                            {% for category, message in messages %}
+                                <div style="padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 0.6rem; border: 1px solid var(--border); background: {{ 'rgba(0, 255, 135, 0.08)' if category == 'success' else 'rgba(255, 82, 82, 0.08)' }}; color: {{ 'var(--success)' if category == 'success' else 'var(--danger)' }};">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
                 <div class="profile-list">
                     <div class="info-row"><label>Nombre</label><span>{{ user.nombre }}</span></div>
                     <div class="info-row"><label>Matrícula</label><span>{{ user.matricula }}</span></div>
+                    <div class="info-row"><label>Correo</label><span>{{ user.email }}</span></div>
+                    <div class="info-row">
+                        <label>Contraseña</label>
+                        <span>{{ user.pwd_mask }}</span>
+                    </div>
                     <div class="info-row"><label>Estado</label><span style="color: var(--success);">Activo</span></div>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="openPasswordModal()" class="btn-action" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;">Cambiar Contraseña</button>
+                    </div>
                 </div>
             </div>
 
@@ -390,8 +409,8 @@
                             <div class="item-box">
                                 <div class="icon-circle"><i class="fas fa-car"></i></div>
                                 <div>
-                                    <h4 style="font-size: 1.1rem; font-weight: 800;">{{ vehicle.placa }}</h4>
-                                    <p style="color: var(--text-secondary); font-size: 0.85rem;">{{ vehicle.marca }} {{ vehicle.modelo }}</p>
+                                    <h4 style="font-size: 1.1rem; font-weight: 800;">{{ vehicle.marca }} {{ vehicle.modelo }}</h4>
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem;">{{ vehicle.color }}</p>
                                 </div>
                                 <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i>
                             </div>
@@ -438,5 +457,72 @@
             </div>
         </div>
     </div>
+    <div id="passwordModal" class="card" style="position: fixed; inset: 0; margin: auto; width: 92%; max-width: 460px; height: max-content; z-index: 2000; display: none; background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 24px; padding: 2rem;">
+        <h2 style="color: var(--accent-cyan); margin-bottom: 1rem;">Cambiar Contraseña</h2>
+        <form action="{{ url_for('user.actualizar_password') }}" method="POST" onsubmit="return validatePwdForm()">
+            <div style="display:flex; flex-direction:column; gap: 0.8rem;">
+                <label style="color: var(--accent-cyan); font-weight:700; font-size:0.85rem;">Nueva contraseña</label>
+                <input id="new_password" type="password" name="new_password" required minlength="8" maxlength="64" pattern="^(?=.*[A-Za-z])(?=.*\\d)\\S{8,64}$" style="padding: 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text-primary);">
+                <label style="color: var(--accent-cyan); font-weight:700; font-size:0.85rem;">Confirmar contraseña</label>
+                <input id="confirm_password" type="password" name="confirm_password" required minlength="8" maxlength="64" pattern="^(?=.*[A-Za-z])(?=.*\\d)\\S{8,64}$" style="padding: 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text-primary);">
+                <div id="pwd_errors" style="color:#FF5252; font-size:0.85rem; min-height: 1.2em;"></div>
+                <div id="pwd_strength" style="height:8px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow:hidden;">
+                    <div id="pwd_bar" style="height:100%; width:0%; background: linear-gradient(90deg, #ff4d4f, #faad14, #52c41a); transition: width .3s;"></div>
+                </div>
+                <div style="display:flex; gap:0.8rem; margin-top: 1rem;">
+                    <button type="button" onclick="closePasswordModal()" class="btn-logout" style="margin:0;">Cancelar</button>
+                    <button id="pwd_submit" type="submit" class="btn-action" style="margin:0;">Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script>
+        function openPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+        }
+        function scorePassword(p) {
+            var score = 0;
+            if (!p) return 0;
+            var length = Math.min(p.length, 64);
+            score += Math.min(30, length * 3);
+            if (/[A-Z]/.test(p)) score += 15;
+            if (/[a-z]/.test(p)) score += 15;
+            if (/[0-9]/.test(p)) score += 20;
+            if (/[^A-Za-z0-9]/.test(p)) score += 20;
+            if (/\\s/.test(p)) score = 0;
+            return Math.min(score, 100);
+        }
+        function validatePwdForm() {
+            var p1 = document.getElementById('new_password').value;
+            var p2 = document.getElementById('confirm_password').value;
+            var errors = [];
+            if (p1.length < 8 || p1.length > 64) errors.push('Debe tener entre 8 y 64 caracteres');
+            if (/\\s/.test(p1)) errors.push('No debe contener espacios');
+            if (!/[A-Za-z]/.test(p1) || !/[0-9]/.test(p1)) errors.push('Debe incluir letras y números');
+            var comunes = ['12345678','password','password123','qwerty','abc123','11111111','123456789'];
+            if (comunes.indexOf(p1.toLowerCase()) !== -1) errors.push('Es demasiado común');
+            if (p1 !== p2) errors.push('Las contraseñas no coinciden');
+            var errBox = document.getElementById('pwd_errors');
+            errBox.textContent = errors.join(' • ');
+            document.getElementById('pwd_submit').disabled = errors.length > 0;
+            return errors.length === 0;
+        }
+        (function attachPwdListeners(){
+            var np = document.getElementById('new_password');
+            var cp = document.getElementById('confirm_password');
+            var bar = document.getElementById('pwd_bar');
+            if (!np || !cp) return;
+            function update() {
+                var s = scorePassword(np.value);
+                bar.style.width = s + '%';
+                validatePwdForm();
+            }
+            np.addEventListener('input', update);
+            cp.addEventListener('input', update);
+        })();
+    </script>
 </body>
 </html>

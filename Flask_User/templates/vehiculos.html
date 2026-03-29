@@ -199,11 +199,25 @@
             color: var(--text-primary);
             font-size: 1rem;
         }
+        .form-group select {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
 
         .modal-footer {
             display: flex;
             gap: 1rem;
             margin-top: 2rem;
+        }
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin: 0.4rem 0 0;
         }
 
         .btn-cancel {
@@ -247,12 +261,45 @@
             color: var(--bg-primary);
             box-shadow: 0 10px 25px rgba(0, 210, 255, 0.3);
         }
+        .vehicle-media {
+            width: 100px;
+            height: 100px;
+            min-width: 100px;
+            min-height: 100px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0, 210, 255, 0.3);
+            overflow: hidden;
+            flex: none;
+        }
+        .vehicle-media.no-image {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border: 1px solid var(--border);
+        }
+        .vehicle-media.has-image {
+            background: rgba(0,0,0,0.2);
+            border: 2px solid rgba(0, 210, 255, 0.35);
+        }
+        .vehicle-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .vehicle-media.clickable { cursor: zoom-in; }
+        
+        .vehicle-info {
+            padding-right: 120px;
+        }
         
         .vehicle-info h3 {
             font-size: 1.6rem;
             font-weight: 800;
             color: var(--text-primary);
             margin-bottom: 0.4rem;
+            overflow-wrap: anywhere;
         }
         
         .vehicle-info p {
@@ -306,7 +353,22 @@
         
         <header class="header">
             <h1>Gestión de Vehículos</h1>
+            <div style="margin-top: 1rem;">
+                <button onclick="openCreateModal()" class="btn-save" style="width:auto;">Agregar Vehículo</button>
+            </div>
         </header>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div style="margin-bottom: 1rem;">
+                    {% for category, message in messages %}
+                        <div style="padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 0.6rem; border: 1px solid var(--border); background: {{ 'rgba(0, 255, 135, 0.08)' if category == 'success' else 'rgba(255, 82, 82, 0.08)' }}; color: {{ 'var(--success)' if category == 'success' else 'var(--danger)' }};">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         
         <div class="vehicles-grid">
             {% if vehiculos %}
@@ -318,18 +380,23 @@
                             </button>
                             <form action="{{ url_for('user.vehiculos') }}" method="POST" style="display: inline;">
                                 <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="delete_placa" value="{{ vehicle.placa }}">
+                                <input type="hidden" name="delete_id" value="{{ vehicle.id }}">
                                 <button type="submit" class="btn-icon btn-delete" onclick="return confirm('¿Estás seguro de eliminar este vehículo?')">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
                         </div>
-                        <div class="vehicle-icon">
-                            <i class="fas fa-car"></i>
+                        {% set img = vehicle.image_url or vehicle.foto or vehicle.imagen or vehicle.photo %}
+                        <div class="vehicle-media {% if img %}has-image clickable{% else %}no-image{% endif %}" {% if img %}onclick="openImage('{{ img }}')" {% endif %}>
+                            {% if img %}
+                                <img src="{{ img }}" alt="{{ vehicle.marca }} {{ vehicle.modelo }}">
+                            {% else %}
+                                <i class="fas fa-car" style="font-size:2rem;color:var(--bg-primary);"></i>
+                            {% endif %}
                         </div>
                         <div class="vehicle-info">
-                            <h3>{{ vehicle.placa }}</h3>
-                            <p>{{ vehicle.marca }} {{ vehicle.modelo }} • {{ vehicle.color }}</p>
+                            <h3>{{ vehicle.marca }} {{ vehicle.modelo }}</h3>
+                            <p>{{ vehicle.color }}</p>
                             <div class="status-pill">
                                 <i class="fas fa-check-circle"></i> Vehículo Autorizado
                             </div>
@@ -345,7 +412,6 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -353,40 +419,110 @@
             </div>
             <form action="{{ url_for('user.vehiculos') }}" method="POST">
                 <input type="hidden" name="action" value="edit">
-                <input type="hidden" id="original_placa" name="original_placa">
+                <input type="hidden" id="vehiculo_id" name="vehiculo_id">
                 
                 <div class="form-group">
-                    <label>Placa</label>
-                    <input type="text" id="edit_placa" name="placa" required>
-                </div>
-                <div class="form-group">
                     <label>Marca</label>
-                    <input type="text" id="edit_marca" name="marca" required>
+                    <input type="text" id="edit_marca" name="marca" required minlength="2" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\\- ]+">
+                    <div id="err_edit_marca" class="error-msg"></div>
                 </div>
                 <div class="form-group">
                     <label>Modelo</label>
-                    <input type="text" id="edit_modelo" name="modelo" required>
+                    <input type="text" id="edit_modelo" name="modelo" required minlength="1" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\\- ]+">
+                    <div id="err_edit_modelo" class="error-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label>Año</label>
+                    <input type="number" id="edit_anio" name="anio" min="1900" max="2100">
+                    <div id="err_edit_anio" class="error-msg"></div>
                 </div>
                 <div class="form-group">
                     <label>Color</label>
-                    <input type="text" id="edit_color" name="color" required>
+                    <input type="text" id="edit_color" name="color" minlength="3" maxlength="50" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+">
+                    <div id="err_edit_color" class="error-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="edit_tipo" name="tipo" required>
+                        <option value="auto">Auto</option>
+                        <option value="moto">Moto</option>
+                        <option value="camioneta">Camioneta</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                    <div id="err_edit_tipo" class="error-msg"></div>
                 </div>
                 
                 <div class="modal-footer">
                     <button type="button" onclick="closeModal()" class="btn-cancel">Cancelar</button>
-                    <button type="submit" class="btn-save">Guardar Cambios</button>
+                    <button type="submit" class="btn-save" onclick="return validateVehicle(this.form)">Guardar Cambios</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Vehículo</h2>
+            </div>
+            <form action="{{ url_for('user.vehiculos') }}" method="POST">
+                <input type="hidden" name="action" value="create">
+                
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" name="marca" required minlength="2" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\\- ]+">
+                    <div id="err_new_marca" class="error-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" name="modelo" required minlength="1" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\\- ]+">
+                    <div id="err_new_modelo" class="error-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label>Año</label>
+                    <input type="number" name="anio" min="1900" max="2100">
+                    <div id="err_new_anio" class="error-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" name="color" minlength="3" maxlength="50" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+">
+                    <div id="err_new_color" class="error-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select name="tipo" required>
+                        <option value="auto">Auto</option>
+                        <option value="moto">Moto</option>
+                        <option value="camioneta">Camioneta</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                    <div id="err_new_tipo" class="error-msg"></div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" onclick="closeCreateModal()" class="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-save" onclick="return validateVehicle(this.form)">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="imageModal" class="modal">
+        <div class="modal-content" style="max-width: 90vw; width: auto; background: transparent; border: none; padding: 0;">
+            <img id="imagePreview" src="" style="max-width: 90vw; max-height: 85vh; border-radius: 16px; display: block; margin: 0 auto;">
+            <div style="display:flex; justify-content:center; margin-top: 1rem;">
+                <button type="button" onclick="closeImage()" class="btn-cancel" style="background: rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.2); color: #fff;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openEditModal(vehicle) {
-            document.getElementById('original_placa').value = vehicle.placa;
-            document.getElementById('edit_placa').value = vehicle.placa;
+            document.getElementById('vehiculo_id').value = vehicle.id;
             document.getElementById('edit_marca').value = vehicle.marca;
             document.getElementById('edit_modelo').value = vehicle.modelo;
-            document.getElementById('edit_color').value = vehicle.color;
+            document.getElementById('edit_anio').value = vehicle.anio || '';
+            document.getElementById('edit_color').value = vehicle.color || '';
+            document.getElementById('edit_tipo').value = vehicle.tipo;
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -394,10 +530,61 @@
             document.getElementById('editModal').style.display = 'none';
         }
 
+        function openCreateModal() {
+            document.getElementById('createModal').style.display = 'flex';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+        function openImage(url) {
+            var img = document.getElementById('imagePreview');
+            img.src = url;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+        function closeImage() {
+            document.getElementById('imageModal').style.display = 'none';
+            document.getElementById('imagePreview').src = '';
+        }
+
         window.onclick = function(event) {
             if (event.target == document.getElementById('editModal')) {
                 closeModal();
             }
+            if (event.target == document.getElementById('createModal')) {
+                closeCreateModal();
+            }
+            if (event.target == document.getElementById('imageModal')) {
+                closeImage();
+            }
+        }
+        function validateVehicle(form) {
+            var marca = (form.marca ? form.marca.value : form.querySelector('#edit_marca').value).trim();
+            var modelo = (form.modelo ? form.modelo.value : form.querySelector('#edit_modelo').value).trim();
+            var anioInput = (form.anio ? form.anio : form.querySelector('#edit_anio'));
+            var anio = anioInput && anioInput.value ? parseInt(anioInput.value, 10) : null;
+            var color = (form.color ? form.color.value : form.querySelector('#edit_color').value).trim();
+            var tipo = (form.tipo ? form.tipo.value : form.querySelector('#edit_tipo').value).trim().toLowerCase();
+            var errors = [];
+            var nowYear = new Date().getFullYear() + 1;
+            var reMarca = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\- ]{2,100}$/;
+            var reModelo = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\- ]{1,100}$/;
+            var reColor = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{3,50}$/;
+            if (!reMarca.test(marca)) errors.push({field:'marca', msg:'Marca inválida'});
+            if (!reModelo.test(modelo)) errors.push({field:'modelo', msg:'Modelo inválido'});
+            if (anio !== null && (isNaN(anio) || anio < 1900 || anio > nowYear)) errors.push({field:'anio', msg:'Año inválido'});
+            if (color && !reColor.test(color)) errors.push({field:'color', msg:'Color inválido'});
+            if (['auto','moto','camioneta','otro'].indexOf(tipo) === -1) errors.push({field:'tipo', msg:'Tipo inválido'});
+            form.querySelectorAll('.error-msg').forEach(function(e){ e.textContent=''; });
+            if (errors.length) {
+                errors.forEach(function(e){
+                    var idPrefix = form.querySelector('#vehiculo_id') ? 'edit' : 'new';
+                    var el = form.querySelector('#err_'+idPrefix+'_'+e.field);
+                    if (el) el.textContent = e.msg;
+                });
+                return false;
+            }
+            return true;
         }
     </script>
 </body>
