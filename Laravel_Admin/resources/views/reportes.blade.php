@@ -595,8 +595,11 @@ function confirmExport() {
         showNotification(`Reporte ${format.toUpperCase()} generado exitosamente`, 'success');
         closeExportModal();
         
-        // In a real app, this would trigger a file download
-        console.log(`Exporting report as ${format}`);
+        if (format === 'pdf') {
+            window.location.href = "{{ route('reportes.export.pdf') }}";
+        } else {
+            console.log(`Exporting report as ${format}`);
+        }
     }, 2000);
 }
 

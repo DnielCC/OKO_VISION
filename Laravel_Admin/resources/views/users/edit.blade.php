@@ -17,7 +17,7 @@
 </div>
 
 <div class="card max-w-4xl mx-auto">
-    <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6">
+    <form action="{{ route('users.update', $user) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
         
@@ -62,6 +62,42 @@
             </div>
         </div>
 
+        <!-- Identidad Física -->
+        <div>
+            <h4 class="text-lg font-medium text-white mb-4 border-b border-gray-700 pb-2">
+                <i class="fas fa-fingerprint text-purple-400 mr-2"></i> Identidad Física
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="sexo" class="block text-sm font-medium text-gray-300 mb-2">Sexo</label>
+                    <select class="input-field w-full @error('sexo') border-red-500 @enderror" id="sexo" name="sexo">
+                        <option value="" class="bg-gray-900">Seleccionar...</option>
+                        <option value="H" class="bg-gray-900" {{ old('sexo', request()->route('user')->persona->sexo ?? '') == 'H' ? 'selected' : '' }}>Hombre (H)</option>
+                        <option value="M" class="bg-gray-900" {{ old('sexo', request()->route('user')->persona->sexo ?? '') == 'M' ? 'selected' : '' }}>Mujer (M)</option>
+                    </select>
+                    @error('sexo')
+                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-300 mb-2">Fecha de Nacimiento</label>
+                    <input type="date" class="input-field w-full @error('fecha_nacimiento') border-red-500 @enderror" 
+                           id="fecha_nacimiento" name="fecha_nacimiento" value="{{ old('fecha_nacimiento', request()->route('user')->persona->fecha_nacimiento ?? '') }}">
+                    @error('fecha_nacimiento')
+                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="foto" class="block text-sm font-medium text-gray-300 mb-2">Foto de Perfil (Opcional)</label>
+                    <input type="file" accept="image/*" class="input-field w-full p-2 text-sm @error('foto') border-red-500 @enderror" 
+                           id="foto" name="foto">
+                    @error('foto')
+                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         <!-- Credenciales de Acceso -->
         <div>
             <h4 class="text-lg font-medium text-white mb-4 border-b border-gray-700 pb-2 mt-8">
@@ -69,9 +105,9 @@
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="identificador" class="block text-sm font-medium text-gray-300 mb-2">Identificador (Username) <span class="text-red-400">*</span></label>
-                    <input type="text" class="input-field w-full @error('identificador') border-red-500 @enderror" 
-                           id="identificador" name="identificador" value="{{ old('identificador', $user->identificador) }}" required maxlength="15">
+                    <label for="identificador" class="block text-sm font-medium text-gray-300 mb-2">Matrícula <span class="text-red-400">*</span></label>
+                    <input type="text" class="input-field w-full font-mono @error('identificador') border-red-500 @enderror" 
+                           id="identificador" name="identificador" value="{{ old('identificador', $user->identificador) }}" required maxlength="9" placeholder="Max. 9 números (Ej. 123456789)">
                     @error('identificador')
                         <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                     @enderror

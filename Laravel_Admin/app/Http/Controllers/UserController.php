@@ -20,11 +20,37 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $users = User::paginate(10);
-            return view('users.index', compact('users'));
+            $query = User::query()
+                ->join('personas', 'usuarios.id_persona', '=', 'personas.id')
+                ->select('usuarios.*', 'personas.nombre', 'personas.apellidos', 'personas.mail as email', 'personas.telefono');
+            
+            // Búsqueda por nombre completo, identificador o correo
+            if ($request->filled('search')) {
+                $search = $request->get('search');
+                $query->where(function($q) use ($search) {
+                    $q->where('personas.nombre', 'ILIKE', "%{$search}%")
+                      ->orWhere('personas.apellidos', 'ILIKE', "%{$search}%")
+                      ->orWhere('usuarios.identificador', 'ILIKE', "%{$search}%")
+                      ->orWhere('personas.mail', 'ILIKE', "%{$search}%");
+                });
+            }
+
+            // Filtro por Rol en staff
+            if ($request->filled('role')) {
+                $role_id = $request->get('role');
+                $usersQuery = (clone $query)->where('usuarios.id_rol', $role_id)->where('usuarios.id_rol', '!=', 3);
+            } else {
+                $usersQuery = (clone $query)->where('usuarios.id_rol', '!=', 3);
+            }
+
+            // Separar visitantes y paginar
+            $users = $usersQuery->paginate(10, ['*'], 'users_page')->withQueryString();
+            $visitors = (clone $query)->where('usuarios.id_rol', 3)->paginate(10, ['*'], 'visitors_page')->withQueryString();
+
+            return view('users.index', compact('users', 'visitors'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al cargar usuarios: ' . $e->getMessage());
         }
@@ -48,19 +74,33 @@ class UserController extends Controller
             'apellidos' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
             'telefono' => 'nullable|string|max:10',
+            'sexo' => 'nullable|in:H,M',
+            'fecha_nacimiento' => 'nullable|date',
+            'foto' => 'nullable|image|max:2048',
             'id_rol' => 'required|integer|in:1,2,3',
-            'identificador' => 'required|string|max:15',
+            'identificador' => 'required|numeric|digits_between:1,9',
             'password' => 'required|string|min:6',
         ]);
 
         try {
+            $fotoPath = null;
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('fotos', 'public');
+            }
+
             // Primero crear la persona
             $personData = [
                 'nombre' => $validated['nombre'],
                 'apellidos' => $validated['apellidos'],
                 'mail' => $validated['email'],
                 'telefono' => $validated['telefono'],
+                'sexo' => $validated['sexo'] ?? null,
+                'fecha_nacimiento' => $validated['fecha_nacimiento'] ?? null,
             ];
+            
+            if ($fotoPath) {
+                $personData['foto'] = '/storage/' . $fotoPath;
+            }
 
             $persona = $this->apiService->createPerson($personData);
             
@@ -117,19 +157,33 @@ class UserController extends Controller
             'apellidos' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
             'telefono' => 'nullable|string|max:10',
+            'sexo' => 'nullable|in:H,M',
+            'fecha_nacimiento' => 'nullable|date',
+            'foto' => 'nullable|image|max:2048',
             'id_rol' => 'required|integer|in:1,2,3',
-            'identificador' => 'required|string|max:15',
+            'identificador' => 'required|numeric|digits_between:1,9',
             'password' => 'nullable|string|min:6',
         ]);
 
         try {
+            $fotoPath = null;
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('fotos', 'public');
+            }
+
             // Actualizar la persona
             $personData = [
                 'nombre' => $validated['nombre'],
                 'apellidos' => $validated['apellidos'],
                 'mail' => $validated['email'],
                 'telefono' => $validated['telefono'],
+                'sexo' => $validated['sexo'] ?? null,
+                'fecha_nacimiento' => $validated['fecha_nacimiento'] ?? null,
             ];
+            
+            if ($fotoPath) {
+                $personData['foto'] = '/storage/' . $fotoPath;
+            }
 
             $this->apiService->updatePerson($user->id_persona, $personData);
             

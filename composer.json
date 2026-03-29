@@ -1,0 +1,6 @@
+{
+    "require": {
+        "symfony/polyfill-iconv": "^1.33",
+        "barryvdh/laravel-dompdf": "^3.1"
+    }
+}
