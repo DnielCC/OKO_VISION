@@ -42,28 +42,34 @@ def index():
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('username') # El campo sigue llamándose 'username' en el form
+        email = request.form.get('username') 
         password = request.form.get('password')
         
-        # Consultamos a la API para verificar el usuario por email
-        # Corregido: El endpoint correcto es /usuarios/ según la configuración del Backend
-        users = get_api_data("/usuarios/")
-        
-        if users == "TIMEOUT" or users == "ERROR":
-            flash('Error de conexión con el servidor de seguridad. Por favor intente más tarde.', 'error')
-            return render_template('login.html')
+        try:
+            # Login por medio de POST al endpoint de la API
+            response = requests.post(f"{API_URL}/auth/login", json={
+                "email": email,
+                "password": password
+            }, timeout=5)
             
-        # Buscamos por email específicamente, ya que el usuario indicó que son correos
-        user = next((u for u in users if u['email'] == email), None)
-        
-        if user: # Simulación de contraseña correcta (en producción validar hash)
-            session['user_id'] = user['id']
-            session['user_username'] = user['username']
-            session['user_email'] = user['email']
-            flash(f"¡Bienvenido {user['username']}!", 'success')
-            return redirect(url_for('user.dashboard'))
-        else:
-            flash('Correo o contraseña incorrectos', 'error')
+            if response.status_code == 200:
+                user = response.json()
+                session['user_id'] = user['id']
+                session['user_username'] = user['username']
+                session['user_email'] = user['email']
+                flash(f"¡Bienvenido {user['username']}!", 'success')
+                return redirect(url_for('user.dashboard'))
+            elif response.status_code == 401:
+                flash('Correo o contraseña incorrectos', 'error')
+            else:
+                flash('Error inesperado de la API', 'error')
+                
+        except requests.exceptions.Timeout:
+            flash('Error de conexión con el servidor. Por favor intente más tarde.', 'error')
+            return render_template('login.html')
+        except Exception as e:
+            flash(f'Error: {e}', 'error')
+            return render_template('login.html')
     
     return render_template('login.html')
 

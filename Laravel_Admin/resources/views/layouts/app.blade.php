@@ -235,6 +235,7 @@
             </nav>
             
             <!-- User Profile -->
+            @auth
             <div class="absolute bottom-6 left-6 right-6">
                 <div class="glassmorphism p-4 rounded-lg">
                     <div class="flex items-center space-x-3">
@@ -242,12 +243,13 @@
                             <i class="fas fa-user text-white"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="text-sm font-medium text-white">Administrador</p>
-                            <p class="text-xs text-gray-400">admin@okovision.com</p>
+                            <p class="text-sm font-medium text-white">{{ Auth::user()->nombre }} {{ Auth::user()->apellidos }}</p>
+                            <p class="text-xs text-gray-400">{{ Auth::user()->email }}</p>
                         </div>
                     </div>
                 </div>
             </div>
+            @endauth
         </div>
     </aside>
     

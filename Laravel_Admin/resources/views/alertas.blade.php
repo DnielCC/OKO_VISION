@@ -126,7 +126,7 @@
                     </td>
                     <td class="px-6 py-4 text-white font-medium">{{ $alerta->title }}</td>
                     <td class="px-6 py-4 text-gray-400 text-sm">{{ $alerta->description }}</td>
-                    <td class="px-6 py-4 text-gray-400 text-sm">{{ $alerta->created_at->format('d/m/Y H:i') }}</td>
+                    <td class="px-6 py-4 text-gray-400 text-sm">{{ \Carbon\Carbon::parse($alerta->created_at)->format('d/m/Y H:i') }}</td>
                     <td class="px-6 py-4">
                         @if($alerta->is_resolved)
                             <span class="text-green-400 text-xs flex items-center">

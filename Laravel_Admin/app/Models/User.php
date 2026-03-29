@@ -2,46 +2,66 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use App\Models\ApiUserTrait;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use ApiUserTrait;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    protected $table = 'usuarios';
+    
     protected $fillable = [
-        'name',
+        'id',
+        'username',
         'email',
-        'password',
+        'nombre',
+        'apellidos',
+        'id_persona',
+        'id_rol',
+        'identificador',
+        'telefono',
+        'activo',
+        'password'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    // Relación con Personas
+    public function persona()
+    {
+        return $this->belongsTo('App\Models\Persona', 'id_persona', 'id');
+    }
+
+    public function getEmailAttribute()
+    {
+        // En Eloquent real si no lo trae el query, consultar a través de API
+        // O si ya está seteado (por el auth login), lo regresa
+        return $this->attributes['email'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('mail') : null);
+    }
+
+    public function getNombreAttribute()
+    {
+        return $this->attributes['nombre'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('nombre') : null);
+    }
+
+    public function getApellidosAttribute()
+    {
+        return $this->attributes['apellidos'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('apellidos') : null);
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'id_persona' => 'integer',
+        'id_rol' => 'integer',
+        'activo' => 'boolean',
+        'email_verified_at' => 'datetime',
+    ];
+
+    protected $attributes = [
+        'activo' => true,
+    ];
 }

@@ -97,7 +97,7 @@
                 @foreach($accesos as $acceso)
                 <tr class="hover:bg-gray-800/30 transition-colors">
                     <td class="px-6 py-4 text-gray-300 font-mono text-sm">{{ $acceso->id }}</td>
-                    <td class="px-6 py-4 text-white">{{ $acceso->user ? $acceso->user->username : 'Desconocido' }}</td>
+                    <td class="px-6 py-4 text-white">{{ $acceso->user_name ?? 'Desconocido' }}</td>
                     <td class="px-6 py-4 text-cyan-400 font-mono">{{ $acceso->vehicle_plate }}</td>
                     <td class="px-6 py-4">
                         <span class="text-xs {{ $acceso->access_type == 'ENTRY' ? 'text-green-400' : 'text-yellow-400' }}">
@@ -105,7 +105,7 @@
                             {{ $acceso->access_type }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-gray-400 text-sm">{{ $acceso->access_time->format('d/m/Y H:i:s') }}</td>
+                    <td class="px-6 py-4 text-gray-400 text-sm">{{ \Carbon\Carbon::parse($acceso->access_time)->format('d/m/Y H:i:s') }}</td>
                     <td class="px-6 py-4">
                         @if($acceso->is_authorized)
                             <span class="bg-green-400/10 text-green-400 text-[10px] px-2 py-1 rounded-full border border-green-400/20 uppercase font-bold">Autorizado</span>

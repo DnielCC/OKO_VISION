@@ -4,7 +4,7 @@ from app.data.db import get_db
 from app.data.database import Usuario
 from app.models.user import UsuarioCreate, UsuarioUpdate
 from app.data.database import Usuario, Persona
-from app.security.auth import verify_user
+from app.security.auth import get_password_hash
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
@@ -19,7 +19,9 @@ def get_all(db: Session = Depends(get_db)):
             "username": user.identificador,
             "email": persona.mail,
             "nombre": persona.nombre,
-            "apellidos": persona.apellidos
+            "apellidos": persona.apellidos,
+            "id_rol": user.id_rol,
+            "id_persona": persona.id
         })
     return output
 
@@ -32,7 +34,10 @@ def get_one(usuario_id: int, db: Session = Depends(get_db)):
 
 @router.post("/")
 def create(data: UsuarioCreate, db: Session = Depends(get_db)):
-    nuevo = Usuario(**data.model_dump())
+    # Hashear contraseña antes de guardar
+    user_data = data.model_dump()
+    user_data["password"] = get_password_hash(user_data["password"])
+    nuevo = Usuario(**user_data)
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
@@ -44,7 +49,11 @@ def update(usuario_id: int, data: UsuarioCreate, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=404, detail="No encontrado")
 
-    for key, value in data.model_dump().items():
+    user_data = data.model_dump()
+    if "password" in user_data and user_data["password"]:
+        user_data["password"] = get_password_hash(user_data["password"])
+
+    for key, value in user_data.items():
         setattr(usuario, key, value)
 
     db.commit()
@@ -56,7 +65,11 @@ def patch(usuario_id: int, data: UsuarioUpdate, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=404, detail="No encontrado")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    if "password" in update_data and update_data["password"]:
+        update_data["password"] = get_password_hash(update_data["password"])
+
+    for key, value in update_data.items():
         setattr(usuario, key, value)
 
     db.commit()
@@ -65,8 +78,7 @@ def patch(usuario_id: int, data: UsuarioUpdate, db: Session = Depends(get_db)):
 @router.delete("/{usuario_id}")
 def delete(
     usuario_id: int,
-    db: Session = Depends(get_db),
-    user: str = Depends(verify_user)
+    db: Session = Depends(get_db)
 ):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
@@ -74,4 +86,4 @@ def delete(
 
     db.delete(usuario)
     db.commit()
-    return {"msg": f"Usuario eliminado por {user}"}
+    return {"msg": f"Usuario eliminado exitosamente"}

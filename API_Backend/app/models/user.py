@@ -16,10 +16,11 @@ class UsuarioBase(BaseModel):
     identificador: str = Field(..., min_length=3, max_length=15)
 
 class UsuarioCreate(UsuarioBase):
-    pass
+    password: str = Field(..., min_length=4, max_length=100)
 
 class UsuarioUpdate(BaseModel):
     identificador: Optional[str]
+    password: Optional[str] = None
 
 class UsuarioOut(UsuarioBase):
     id: int

@@ -148,7 +148,7 @@
                     </div>
                     <div class="flex-1">
                         <p class="text-sm font-medium text-white">{{ $acceso->vehicle_plate }}</p>
-                        <p class="text-xs text-gray-400">{{ $acceso->access_time->format('H:i:s') }} - {{ $acceso->access_type }}</p>
+                        <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($acceso->access_time)->format('H:i:s') }} - {{ $acceso->access_type }}</p>
                     </div>
                     @if($acceso->is_authorized)
                         <span class="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">OK</span>

@@ -65,6 +65,7 @@ class Usuario(Base):
     id_departamento = Column(Integer, ForeignKey("departamentos.id"))
     id_rol = Column(Integer, ForeignKey("roles.id"), nullable=False)
     identificador = Column(String(15), nullable=False)
+    password = Column(String(255), nullable=True)  # Contraseña hasheada (nullable para retrocompatibilidad inicial)
 
 class Visitante(Base):
     __tablename__ = "visitantes"
