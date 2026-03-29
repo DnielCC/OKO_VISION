@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Enum, Boolean, Text, BigInteger
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 from app.data.db import Base
 import datetime
@@ -105,3 +105,107 @@ class Acceso(Base):
     resultado = Column(PG_ENUM('p', 'd', name='resultado_enum'), nullable=False)
     metodo = Column(PG_ENUM('credencial', 'QR', 'Gafete', name='metodo_enum'), nullable=False)
     autoriza = Column(Integer)
+
+# --- TABLAS COMPATIBILIDAD LARAVEL (MIGRACIONES FRONTEND) ---
+
+class LaravelUser(Base):
+    __tablename__ = 'users'
+    id = Column(BigInteger, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=False)
+    email_verified_at = Column(DateTime, nullable=True)
+    password = Column(String(255), nullable=False)
+    remember_token = Column(String(100), nullable=True)
+    role = Column(PG_ENUM('admin', 'usuario', 'visitante', name='users_role_enum', create_type=False), default='usuario')
+    telefono = Column(String(255), nullable=True)
+    direccion = Column(String(255), nullable=True)
+    activo = Column(Boolean, default=True)
+    created_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, nullable=True)
+
+class PasswordResetToken(Base):
+    __tablename__ = 'password_reset_tokens'
+    email = Column(String(255), primary_key=True)
+    token = Column(String(255), nullable=False)
+    created_at = Column(DateTime, nullable=True)
+
+class Session(Base):
+    __tablename__ = 'sessions'
+    id = Column(String(255), primary_key=True)
+    user_id = Column(BigInteger, index=True, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    payload = Column(Text, nullable=False)
+    last_activity = Column(Integer, index=True, nullable=False)
+
+class Cache(Base):
+    __tablename__ = 'cache'
+    key = Column(String(255), primary_key=True)
+    value = Column(Text, nullable=False)
+    expiration = Column(Integer, index=True, nullable=False)
+
+class CacheLock(Base):
+    __tablename__ = 'cache_locks'
+    key = Column(String(255), primary_key=True)
+    owner = Column(String(255), nullable=False)
+    expiration = Column(Integer, index=True, nullable=False)
+
+class Job(Base):
+    __tablename__ = 'jobs'
+    id = Column(BigInteger, primary_key=True, index=True)
+    queue = Column(String(255), index=True, nullable=False)
+    payload = Column(Text, nullable=False)
+    attempts = Column(Integer, nullable=False)
+    reserved_at = Column(Integer, nullable=True)
+    available_at = Column(Integer, nullable=False)
+    created_at = Column(Integer, nullable=False)
+
+class JobBatch(Base):
+    __tablename__ = 'job_batches'
+    id = Column(String(255), primary_key=True)
+    name = Column(String(255), nullable=False)
+    total_jobs = Column(Integer, nullable=False)
+    pending_jobs = Column(Integer, nullable=False)
+    failed_jobs = Column(Integer, nullable=False)
+    failed_job_ids = Column(Text, nullable=False)
+    options = Column(Text, nullable=True)
+    cancelled_at = Column(Integer, nullable=True)
+    created_at = Column(Integer, nullable=False)
+    finished_at = Column(Integer, nullable=True)
+
+class FailedJob(Base):
+    __tablename__ = 'failed_jobs'
+    id = Column(BigInteger, primary_key=True, index=True)
+    uuid = Column(String(255), unique=True, nullable=False)
+    connection = Column(Text, nullable=False)
+    queue = Column(Text, nullable=False)
+    payload = Column(Text, nullable=False)
+    exception = Column(Text, nullable=False)
+    failed_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+class LaravelVehicle(Base):
+    __tablename__ = 'vehicles'
+    id = Column(BigInteger, primary_key=True, index=True)
+    plate = Column(String(255), unique=True, nullable=False)
+    brand = Column(String(255), nullable=False)
+    model = Column(String(255), nullable=False)
+    color = Column(String(255), nullable=False)
+    owner_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+
+class LaravelAccessLog(Base):
+    __tablename__ = 'access_logs'
+    id = Column(BigInteger, primary_key=True, index=True)
+    user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    vehicle_plate = Column(String(255), nullable=False)
+    access_time = Column(DateTime, nullable=False)
+    access_type = Column(String(255), nullable=False)
+    is_authorized = Column(Boolean, nullable=False)
+
+class LaravelAlert(Base):
+    __tablename__ = 'alerts'
+    id = Column(BigInteger, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    severity = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    is_resolved = Column(Boolean, default=False, nullable=False)

@@ -596,7 +596,7 @@ function confirmExport() {
         closeExportModal();
         
         if (format === 'pdf') {
-            window.location.href = "{{ route('reportes.export.pdf') }}";
+            window.open("{{ route('reportes.export.pdf') }}", "_blank");
         } else {
             console.log(`Exporting report as ${format}`);
         }
