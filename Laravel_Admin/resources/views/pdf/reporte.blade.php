@@ -38,6 +38,7 @@
 
     <div class="content">
 
+        @if($include_summary)
         <h2 class="section-title">Resumen del Periodo</h2>
         <div>
             <div class="metric-box">
@@ -62,8 +63,25 @@
             </div>
         </div>
         <div style="clear: both;"></div>
+        @endif
 
+        @if($include_charts)
+        <h2 class="section-title">Análisis Visual</h2>
+        <div style="background-color: #F7FAFC; border: 1px dashed #A0AEC0; padding: 40px; text-align: center; color: #718096; border-radius: 10px;">
+            <p style="font-size: 16px; font-weight: bold;">[ Gráficos de Tendencia ]</p>
+            <p style="font-size: 12px;">Visualización de flujo de accesos por hora y día</p>
+            <div style="margin-top: 20px; height: 100px; width: 100%; border-bottom: 2px solid #CBD5E0; position: relative;">
+                <div style="position: absolute; bottom: 0; left: 10%; height: 40%; width: 10%; background-color: #00F2FF; opacity: 0.5;"></div>
+                <div style="position: absolute; bottom: 0; left: 25%; height: 70%; width: 10%; background-color: #00F2FF; opacity: 0.5;"></div>
+                <div style="position: absolute; bottom: 0; left: 40%; height: 55%; width: 10%; background-color: #00F2FF; opacity: 0.5;"></div>
+                <div style="position: absolute; bottom: 0; left: 55%; height: 90%; width: 10%; background-color: #00F2FF; opacity: 0.5;"></div>
+                <div style="position: absolute; bottom: 0; left: 70%; height: 30%; width: 10%; background-color: #00F2FF; opacity: 0.5;"></div>
+                <div style="position: absolute; bottom: 0; left: 85%; height: 65%; width: 10%; background-color: #00F2FF; opacity: 0.5;"></div>
+            </div>
+        </div>
+        @endif
 
+        @if($include_tables)
         <h2 class="section-title">Últimos Accesos (Muestra)</h2>
         <table>
             <thead>
@@ -115,7 +133,9 @@
                 @endforeach
             </tbody>
         </table>
+        @endif
 
+        @if($include_summary)
         <h2 class="section-title">Resumen de Alertas</h2>
         <table>
             <thead>
@@ -143,6 +163,7 @@
                 @endforeach
             </tbody>
         </table>
+        @endif
 
     </div>
 

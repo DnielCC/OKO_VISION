@@ -554,7 +554,7 @@ CREATE TABLE public.personas (
     apellidos character varying(300) NOT NULL,
     fecha_nacimiento date,
     sexo public.sexo_enum,
-    foto character varying(500),
+    foto text,
     telefono character varying(10),
     mail character varying(50)
 );

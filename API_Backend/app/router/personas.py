@@ -88,10 +88,21 @@ def patch(persona_id: int, data: PersonaUpdate, db: Session = Depends(get_db)):
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    
+    # Convertir fecha si viene en el patch
+    if "fecha_nacimiento" in update_data and update_data["fecha_nacimiento"]:
+        try:
+            from datetime import datetime
+            update_data["fecha_nacimiento"] = datetime.strptime(update_data["fecha_nacimiento"], "%Y-%m-%d").date()
+        except Exception:
+            pass
+
+    for key, value in update_data.items():
         setattr(persona, key, value)
 
     db.commit()
+    db.refresh(persona)
     return persona
 
 @router.delete("/{persona_id}")

@@ -68,8 +68,12 @@ trait ApiUserTrait
             'identificador' => $attributes['identificador'] ?? $this->identificador,
         ];
 
+        if (!empty($attributes['password'])) {
+            $apiData['password'] = $attributes['password'];
+        }
+
         try {
-            $result = self::getApiService()->updateUser($this->id, $apiData);
+            $result = self::getApiService()->patchUser($this->id, $apiData);
             $this->fill((array) $result);
             return $this;
         } catch (\Exception $e) {

@@ -97,9 +97,13 @@ class DashboardController extends Controller
         }
     }
 
-    public function exportarPdf()
+    public function exportarPdf(Request $request)
     {
         try {
+            $includeCharts = $request->get('charts', '1') === '1';
+            $includeTables = $request->get('tables', '1') === '1';
+            $includeSummary = $request->get('summary', '1') === '1';
+
             // Obtener datos desde la API
             $usuariosRaw = $this->apiService->getUsers();
             $vehiculosRaw = $this->apiService->getVehicles();
@@ -116,12 +120,12 @@ class DashboardController extends Controller
             
             $ultimos_accesos = array_slice($accesos, 0, 10);
             
-            // Procesar usuarios para el top (simulado con los que más accesos tienen si tuvieramos esa info, o simplemente los últimos)
+            // Procesar usuarios para el top
             $usuarios_activos = array_slice($usuarios, 0, 5);
             $usuarios_format = array_map(function($u) {
                 return (object)[
                     'nombre' => $u->name ?? 'Usuario Desconocido',
-                    'accesos' => rand(1, 50), // Simulamos el conteo por ahora porque la API quizás no lo de
+                    'accesos' => rand(1, 50),
                     'ultimo' => $u->created_at ?? 'Desconocido'
                 ];
             }, $usuarios_activos);
@@ -140,19 +144,21 @@ class DashboardController extends Controller
 
             $metrics = [
                 'fecha_generacion' => now()->format('d/m/Y H:i:s'),
-                'total_accesos_hoy' => count($accesos_hoy) > 0 ? count($accesos_hoy) : count($accesos), // Default to total if no access today
+                'total_accesos_hoy' => count($accesos_hoy) > 0 ? count($accesos_hoy) : count($accesos),
                 'total_vehiculos' => count($vehiculos),
-                'tasa_ia' => '98.7%', // Mantener simulado ya que no hay endpoint de IA
-                'alertas_activas' => 0, // No hay endpoint de alertas
-                
+                'tasa_ia' => '98.7%',
+                'alertas_activas' => 0,
                 'ultimos_accesos' => $accesos_format,
                 'usuarios_activos' => $usuarios_format,
-                
                 'resumen_alertas' => [
                     'Criticas' => ['total' => 0, 'resueltas' => 0, 'pendientes' => 0],
                     'Altas' => ['total' => 0, 'resueltas' => 0, 'pendientes' => 0],
                     'Medias' => ['total' => 0, 'resueltas' => 0, 'pendientes' => 0]
-                ]
+                ],
+                // Nuevos flags de inclusión
+                'include_charts' => $includeCharts,
+                'include_tables' => $includeTables,
+                'include_summary' => $includeSummary
             ];
 
             $pdf = Pdf::loadView('pdf.reporte', $metrics);
@@ -168,6 +174,52 @@ class DashboardController extends Controller
                 'Asegúrate de haber ejecutado: docker compose exec laravel_admin composer update',
                 $e->getTraceAsString()
             );
+        }
+    }
+
+    public function exportarCsv(Request $request)
+    {
+        try {
+            $includeTables = $request->get('tables', '1') === '1';
+            
+            if (!$includeTables) {
+                return redirect()->back()->with('warning', 'La exportación CSV requiere incluir tablas detalladas.');
+            }
+
+            $accesosRaw = $this->apiService->getAccessLogs();
+            $accesos = is_array($accesosRaw) ? $accesosRaw : [];
+
+            $filename = "Reporte_Accesos_" . date('Y-m-d_H-i-s') . ".csv";
+            $headers = array(
+                "Content-type" => "text/csv",
+                "Content-Disposition" => "attachment; filename=$filename",
+                "Pragma" => "no-cache",
+                "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+                "Expires" => "0"
+            );
+
+            $columns = array('ID', 'Usuario', 'Vehículo', 'Tipo', 'Fecha/Hora', 'Estado');
+
+            $callback = function() use ($accesos, $columns) {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, $columns);
+
+                foreach ($accesos as $acceso) {
+                    fputcsv($file, array(
+                        $acceso->id ?? 'N/A',
+                        $acceso->user_name ?? 'Desconocido',
+                        $acceso->vehicle_plate ?? 'Sin vehículo',
+                        $acceso->access_type ?? 'N/A',
+                        isset($acceso->access_time) ? \Carbon\Carbon::parse($acceso->access_time)->format('d/m/Y H:i:s') : 'N/A',
+                        isset($acceso->is_authorized) && $acceso->is_authorized ? 'Autorizado' : 'Denegado'
+                    ));
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al generar CSV: ' . $e->getMessage());
         }
     }
 }

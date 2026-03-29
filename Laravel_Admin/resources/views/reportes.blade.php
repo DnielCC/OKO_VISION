@@ -543,15 +543,15 @@
                     <label class="block text-sm font-medium text-gray-300 mb-2">Incluir</label>
                     <div class="space-y-2">
                         <label class="flex items-center">
-                            <input type="checkbox" class="mr-2" checked>
+                            <input type="checkbox" name="include_charts" class="mr-2" checked>
                             <span class="text-gray-300">Gráficos y visualizaciones</span>
                         </label>
                         <label class="flex items-center">
-                            <input type="checkbox" class="mr-2" checked>
+                            <input type="checkbox" name="include_tables" class="mr-2" checked>
                             <span class="text-gray-300">Tablas detalladas</span>
                         </label>
                         <label class="flex items-center">
-                            <input type="checkbox" class="mr-2" checked>
+                            <input type="checkbox" name="include_summary" class="mr-2" checked>
                             <span class="text-gray-300">Resumen ejecutivo</span>
                         </label>
                     </div>
@@ -587,20 +587,33 @@ function closeExportModal() {
 
 function confirmExport() {
     const format = document.querySelector('input[name="format"]:checked').value;
+    const includeCharts = document.querySelector('input[name="include_charts"]').checked;
+    const includeTables = document.querySelector('input[name="include_tables"]').checked;
+    const includeSummary = document.querySelector('input[name="include_summary"]').checked;
     
-    // Simulate export
+    // Construct query parameters
+    const params = new URLSearchParams({
+        format: format,
+        charts: includeCharts ? '1' : '0',
+        tables: includeTables ? '1' : '0',
+        summary: includeSummary ? '1' : '0'
+    });
+
     showNotification(`Generando reporte en formato ${format.toUpperCase()}...`, 'info');
     
     setTimeout(() => {
-        showNotification(`Reporte ${format.toUpperCase()} generado exitosamente`, 'success');
         closeExportModal();
         
+        let baseUrl = "";
         if (format === 'pdf') {
-            window.open("{{ route('reportes.export.pdf') }}", "_blank");
-        } else {
-            console.log(`Exporting report as ${format}`);
+            baseUrl = "{{ route('reportes.export.pdf') }}";
+        } else if (format === 'excel' || format === 'csv') {
+            baseUrl = "{{ route('reportes.export.csv') }}";
         }
-    }, 2000);
+        
+        window.location.href = `${baseUrl}?${params.toString()}`;
+        showNotification(`Reporte ${format.toUpperCase()} generado exitosamente`, 'success');
+    }, 1500);
 }
 
 function refreshData() {

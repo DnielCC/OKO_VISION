@@ -48,6 +48,11 @@ class User extends Authenticatable
         return $this->attributes['apellidos'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('apellidos') : null);
     }
 
+    public function getTelefonoAttribute()
+    {
+        return $this->attributes['telefono'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('telefono') : null);
+    }
+
     protected $hidden = [
         'password',
         'remember_token',

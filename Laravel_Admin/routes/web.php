@@ -67,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/alertas', [DashboardController::class, 'alertas'])->name('alertas');
     Route::get('/reportes', [DashboardController::class, 'reportes'])->name('reportes');
     Route::get('/reportes/export/pdf', [DashboardController::class, 'exportarPdf'])->name('reportes.export.pdf');
+    Route::get('/reportes/export/csv', [DashboardController::class, 'exportarCsv'])->name('reportes.export.csv');
     
     // Rutas para el CRUD de usuarios
     Route::resource('users', UserController::class);

@@ -13,6 +13,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db_init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oko_admin -d oko_vision"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - oko_network
 
@@ -30,7 +35,8 @@ services:
     volumes:
       - ./API_Backend:/app
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
     networks:
       - oko_network
 
@@ -65,12 +71,23 @@ services:
       - DB_DATABASE=oko_vision
       - DB_USERNAME=oko_admin
       - DB_PASSWORD=oko_password
+      - API_URL=http://api_backend:8000
       - PHP_CLI_SERVER_WORKERS=8
       - APP_DEBUG=true
       - SESSION_DRIVER=cookie
       - APP_KEY=base64:FaBcBKAnX5hFuBM1O4B67bVHVTQRZr/iLem9jkeFG5U=
+    volumes:
+      - ./Laravel_Admin/app:/var/www/html/app
+      - ./Laravel_Admin/config:/var/www/html/config
+      - ./Laravel_Admin/resources:/var/www/html/resources
+      - ./Laravel_Admin/routes:/var/www/html/routes
+      - ./Laravel_Admin/public:/var/www/html/public
+      - ./Laravel_Admin/database:/var/www/html/database
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
+      api_backend:
+        condition: service_started
     networks:
       - oko_network
 

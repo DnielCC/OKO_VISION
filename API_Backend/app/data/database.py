@@ -27,7 +27,7 @@ class Persona(Base):
     apellidos = Column(String(300), nullable=False)
     fecha_nacimiento = Column(Date)
     sexo = Column(PG_ENUM('H', 'M', name='sexo_enum'))
-    foto = Column(String(500))
+    foto = Column(Text)
     telefono = Column(String(10))
     mail = Column(String(50))
 

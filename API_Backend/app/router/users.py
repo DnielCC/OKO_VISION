@@ -21,7 +21,8 @@ def get_all(db: Session = Depends(get_db)):
             "nombre": persona.nombre,
             "apellidos": persona.apellidos,
             "id_rol": user.id_rol,
-            "id_persona": persona.id
+            "id_persona": persona.id,
+            "foto": persona.foto
         })
     return output
 

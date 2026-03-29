@@ -32,6 +32,8 @@ class UsuarioCreate(UsuarioBase):
         return v
 
 class UsuarioUpdate(BaseModel):
+    id_persona: Optional[int] = None
+    id_rol: Optional[int] = None
     identificador: Optional[str] = None
     password: Optional[str] = None
 

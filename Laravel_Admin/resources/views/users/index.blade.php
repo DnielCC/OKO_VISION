@@ -62,7 +62,7 @@
             <select name="role" id="role" class="input-field">
                 <option value="">Todos los Roles</option>
                 <option value="1" {{ request('role') == '1' ? 'selected' : '' }}>Administrador</option>
-                <option value="2" {{ request('role') == '2' ? 'selected' : '' }}>Operador</option>
+                <option value="2" {{ request('role') == '2' ? 'selected' : '' }}>Usuario</option>
             </select>
         </div>
 
@@ -105,8 +105,11 @@
                     <td class="px-6 py-4 text-gray-400 font-mono text-xs">#{{ $user->id }}</td>
                     <td class="px-6 py-4">
                         <div class="flex items-center">
-                            @if($user->persona && $user->persona->foto)
-                                <img src="{{ $user->persona->foto }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover mr-3 border border-cyan-400/30 shadow-[0_0_10px_rgba(0,242,255,0.2)]">
+                            @php
+                                $userFoto = $user->foto ?? ($user->persona->foto ?? null);
+                            @endphp
+                            @if($userFoto)
+                                <img src="{{ $userFoto }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover mr-3 border border-cyan-400/30 shadow-[0_0_10px_rgba(0,242,255,0.2)]">
                             @else
                                 <div class="w-8 h-8 bg-cyan-400/10 rounded-full flex items-center justify-center mr-3 text-cyan-400 font-bold uppercase">
                                     {{ substr($user->nombre, 0, 1) }}{{ substr($user->apellidos, 0, 1) }}
@@ -126,7 +129,7 @@
                         @if($user->isAdmin())
                             <span class="bg-red-400/10 text-red-400 text-[10px] px-2 py-1 rounded-full border border-red-400/20 uppercase font-bold text-center inline-block w-24">Admin</span>
                         @else
-                            <span class="bg-cyan-400/10 text-cyan-400 text-[10px] px-2 py-1 rounded-full border border-cyan-400/20 uppercase font-bold text-center inline-block w-24">Operador</span>
+                            <span class="bg-cyan-400/10 text-cyan-400 text-[10px] px-2 py-1 rounded-full border border-cyan-400/20 uppercase font-bold text-center inline-block w-24">Usuario</span>
                         @endif
                     </td>
                     <td class="px-6 py-4">
