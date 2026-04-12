@@ -6,6 +6,7 @@
     <title>OKO VISION - Mi Código de Acceso</title>
     <style>
         :root {
+            /* Dark theme (default) */
             --bg-primary: #0A0F1E;
             --bg-secondary: #141E33;
             --accent-cyan: #00D2FF;
@@ -14,6 +15,24 @@
             --text-secondary: #8A99AF;
             --glass: rgba(20, 30, 51, 0.75);
             --border: rgba(0, 210, 255, 0.15);
+            --card-bg: rgba(20, 30, 51, 0.75);
+            --input-bg: rgba(255,255,255,0.05);
+            --hover-bg: rgba(0, 210, 255, 0.08);
+        }
+
+        [data-theme="light"] {
+            /* Light theme mejorado */
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --accent-cyan: #0EA5E9;
+            --accent-blue: #0284C7;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --glass: rgba(255, 255, 255, 0.95);
+            --border: rgba(14, 165, 233, 0.15);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --input-bg: rgba(248, 250, 252, 0.8);
+            --hover-bg: rgba(14, 165, 233, 0.08);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -165,6 +184,34 @@
             box-shadow: 0 10px 25px rgba(0, 210, 255, 0.3);
         }
 
+        .theme-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(0, 210, 255, 0.08);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            color: var(--accent-cyan);
+            padding: 0.7rem;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            z-index: 10;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4);
+            transform: translateY(-3px);
+        }
+
         @media (max-width: 850px) {
             .container { grid-template-columns: 1fr; padding-top: 6rem; }
             .back-btn { top: 1.5rem; }
@@ -221,6 +268,10 @@
         <i class="fas fa-arrow-left"></i> Volver al Dashboard
     </a>
 
+    <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+        <i class="fas fa-sun" id="theme-icon"></i>
+    </button>
+
     <div class="container">
         <div class="qr-card">
             <div class="qr-wrapper">
@@ -270,5 +321,38 @@
             </p>
         </div>
     </div>
+    <script>
+        // Theme toggle functionality
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-moon';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeIcon.className = 'fas fa-sun';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (currentTheme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', initTheme);
+    </script>
 </body>
 </html>
