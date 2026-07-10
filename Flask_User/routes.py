@@ -207,14 +207,16 @@ def vehiculos():
                 if r.status_code == 200:
                     flash('Vehículo actualizado', 'success')
                 else:
-                    flash('No se pudo actualizar el vehículo', 'error')
+                    detalle = r.json().get('detail') if r.headers.get('content-type','').startswith('application/json') else None
+                    flash(detalle or 'No se pudo actualizar el vehÃ­culo', 'error')
             elif action == 'delete':
                 vehiculo_id = request.form.get('delete_id')
                 r = requests.delete(f"{API_URL}/vehiculos/{vehiculo_id}", timeout=5)
                 if r.status_code == 200:
                     flash('Vehículo eliminado', 'success')
                 else:
-                    flash('No se pudo eliminar el vehículo', 'error')
+                    detalle = r.json().get('detail') if r.headers.get('content-type','').startswith('application/json') else None
+                    flash(detalle or 'No se pudo eliminar el vehÃ­culo', 'error')
         except requests.exceptions.Timeout:
             flash('Error de conexión con el servidor', 'error')
         except Exception as e:

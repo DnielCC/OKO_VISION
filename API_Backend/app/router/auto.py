@@ -3,11 +3,12 @@ from sqlalchemy.orm import Session
 from app.data.db import get_db
 from app.data.database import Vehiculo, PersonaVehiculo, Usuario, Estatus
 from app.models.cars import VehiculoCreate, VehiculoUpdate
+from app.security.auth import get_current_user
 
 car = APIRouter(prefix="/vehiculos", tags=["Vehiculos"])
 
 @car.get("/")
-def get_all(db: Session = Depends(get_db)):
+def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     results = db.query(Vehiculo, PersonaVehiculo, Usuario).join(
         PersonaVehiculo, Vehiculo.id == PersonaVehiculo.id_vehiculo
     ).join(
@@ -28,14 +29,14 @@ def get_all(db: Session = Depends(get_db)):
     return output
 
 @car.get("/{vehiculo_id}")
-def get_one(vehiculo_id: int, db: Session = Depends(get_db)):
+def get_one(vehiculo_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     vehiculo = db.query(Vehiculo).filter(Vehiculo.id == vehiculo_id).first()
     if not vehiculo:
         raise HTTPException(status_code=404, detail="Vehiculo no encontrado")
     return vehiculo
 
 @car.post("/", status_code=status.HTTP_201_CREATED)
-def create(data: VehiculoCreate, db: Session = Depends(get_db)):
+def create(data: VehiculoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     usuario = db.query(Usuario).filter(Usuario.id == data.owner_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -65,7 +66,7 @@ def create(data: VehiculoCreate, db: Session = Depends(get_db)):
     return nuevo
 
 @car.put("/{vehiculo_id}")
-def update(vehiculo_id: int, data: VehiculoCreate, db: Session = Depends(get_db)):
+def update(vehiculo_id: int, data: VehiculoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     vehiculo = db.query(Vehiculo).filter(Vehiculo.id == vehiculo_id).first()
     if not vehiculo:
         raise HTTPException(status_code=404, detail="No encontrado")
@@ -79,7 +80,7 @@ def update(vehiculo_id: int, data: VehiculoCreate, db: Session = Depends(get_db)
     return vehiculo
 
 @car.patch("/{vehiculo_id}")
-def patch(vehiculo_id: int, data: VehiculoUpdate, db: Session = Depends(get_db)):
+def patch(vehiculo_id: int, data: VehiculoUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     vehiculo = db.query(Vehiculo).filter(Vehiculo.id == vehiculo_id).first()
     if not vehiculo:
         raise HTTPException(status_code=404, detail="No encontrado")
@@ -91,7 +92,7 @@ def patch(vehiculo_id: int, data: VehiculoUpdate, db: Session = Depends(get_db))
     return vehiculo
 
 @car.delete("/{vehiculo_id}")
-def delete(vehiculo_id: int, db: Session = Depends(get_db)):
+def delete(vehiculo_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     vehiculo = db.query(Vehiculo).filter(Vehiculo.id == vehiculo_id).first()
     if not vehiculo:
         raise HTTPException(status_code=404, detail="No encontrado")

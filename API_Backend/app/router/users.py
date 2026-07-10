@@ -4,12 +4,12 @@ from app.data.db import get_db
 from app.data.database import Usuario
 from app.models.user import UsuarioCreate, UsuarioUpdate
 from app.data.database import Usuario, Persona
-from app.security.auth import get_password_hash
+from app.security.auth import get_password_hash, get_current_user
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 @router.get("/")
-def get_all(db: Session = Depends(get_db)):
+def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     # Unimos con Persona para obtener el email y nombre para el portal de usuario
     results = db.query(Usuario, Persona).join(Persona, Usuario.id_persona == Persona.id).all()
     output = []
@@ -27,14 +27,14 @@ def get_all(db: Session = Depends(get_db)):
     return output
 
 @router.get("/{usuario_id}")
-def get_one(usuario_id: int, db: Session = Depends(get_db)):
+def get_one(usuario_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario
 
 @router.post("/")
-def create(data: UsuarioCreate, db: Session = Depends(get_db)):
+def create(data: UsuarioCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     # Hashear contraseña antes de guardar
     user_data = data.model_dump()
     user_data["password"] = get_password_hash(user_data["password"])
@@ -45,7 +45,7 @@ def create(data: UsuarioCreate, db: Session = Depends(get_db)):
     return nuevo
 
 @router.put("/{usuario_id}")
-def update(usuario_id: int, data: UsuarioCreate, db: Session = Depends(get_db)):
+def update(usuario_id: int, data: UsuarioCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="No encontrado")
@@ -61,7 +61,7 @@ def update(usuario_id: int, data: UsuarioCreate, db: Session = Depends(get_db)):
     return usuario
 
 @router.patch("/{usuario_id}")
-def patch(usuario_id: int, data: UsuarioUpdate, db: Session = Depends(get_db)):
+def patch(usuario_id: int, data: UsuarioUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="No encontrado")
@@ -79,7 +79,8 @@ def patch(usuario_id: int, data: UsuarioUpdate, db: Session = Depends(get_db)):
 @router.delete("/{usuario_id}")
 def delete(
     usuario_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
 ):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:

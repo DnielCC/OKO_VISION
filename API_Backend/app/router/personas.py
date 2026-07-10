@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.data.db import get_db
-from app.data.database import Persona
+from app.data.database import Persona, Usuario
 from pydantic import BaseModel
 from typing import Optional
+from app.security.auth import get_current_user
 
 class PersonaBase(BaseModel):
     nombre: str
@@ -29,7 +30,7 @@ class PersonaUpdate(BaseModel):
 router = APIRouter(prefix="/personas", tags=["Personas"])
 
 @router.get("/")
-def get_all(db: Session = Depends(get_db)):
+def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     personas = db.query(Persona).all()
     return [
         {
@@ -46,7 +47,7 @@ def get_all(db: Session = Depends(get_db)):
     ]
 
 @router.get("/{persona_id}")
-def get_one(persona_id: int, db: Session = Depends(get_db)):
+def get_one(persona_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
@@ -63,7 +64,7 @@ def get_one(persona_id: int, db: Session = Depends(get_db)):
     }
 
 @router.post("/")
-def create(data: PersonaCreate, db: Session = Depends(get_db)):
+def create(data: PersonaCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     nueva = Persona(**data.model_dump())
     db.add(nueva)
     db.commit()
@@ -71,7 +72,7 @@ def create(data: PersonaCreate, db: Session = Depends(get_db)):
     return nueva
 
 @router.put("/{persona_id}")
-def update(persona_id: int, data: PersonaCreate, db: Session = Depends(get_db)):
+def update(persona_id: int, data: PersonaCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
@@ -83,7 +84,7 @@ def update(persona_id: int, data: PersonaCreate, db: Session = Depends(get_db)):
     return persona
 
 @router.patch("/{persona_id}")
-def patch(persona_id: int, data: PersonaUpdate, db: Session = Depends(get_db)):
+def patch(persona_id: int, data: PersonaUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
@@ -106,7 +107,7 @@ def patch(persona_id: int, data: PersonaUpdate, db: Session = Depends(get_db)):
     return persona
 
 @router.delete("/{persona_id}")
-def delete(persona_id: int, db: Session = Depends(get_db)):
+def delete(persona_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")

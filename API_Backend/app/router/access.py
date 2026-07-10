@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.data.db import get_db
-from app.data.database import Acceso, Persona, Puerta, Dispositivo
+from app.data.database import Acceso, Persona, Puerta, Dispositivo, Usuario
 from pydantic import BaseModel
 from typing import Optional
+from app.security.auth import get_current_user
 
 class AccesoCreate(BaseModel):
     id_persona: int
@@ -18,7 +19,7 @@ class AccesoCreate(BaseModel):
 router = APIRouter(prefix="/accesos", tags=["Accesos"])
 
 @router.get("/")
-def get_all(db: Session = Depends(get_db)):
+def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     results = db.query(Acceso, Persona).join(Persona, Acceso.id_persona == Persona.id).all()
     output = []
     for access, persona in results:
@@ -34,7 +35,7 @@ def get_all(db: Session = Depends(get_db)):
     return output
 
 @router.post("/")
-def create(data: AccesoCreate, db: Session = Depends(get_db)):
+def create(data: AccesoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     nuevo = Acceso(**data.model_dump())
     db.add(nuevo)
     db.commit()
