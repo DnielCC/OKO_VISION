@@ -138,9 +138,15 @@ Se creó el archivo [API_Backend/test_security.py](file:///c:/Users/Victus/OKO_V
 
 ---
 
-## 6. Conclusión
+## 6. Conclusión General
 
 Las implementaciones realizadas mejoran significativamente la seguridad de la API al requerir autenticación mediante tokens JWT para acceder a datos sensibles.
+
+### 6.1 Conclusiones Individuales
+
+- **Horta Martínez Axel Santiago**: Las implementaciones realizadas mejoran significativamente la seguridad de la API al requerir autenticación mediante tokens JWT para acceder a datos sensibles.
+- **Cano Cabrera Eros Daniel**: La integración de JWT y la protección de endpoints refuerza la confidencialidad y el control de acceso a la información del sistema.
+- **Atilano García María Carmen**: El uso de tokens con expiración y la validación en cada solicitud mitiga riesgos de acceso no autorizado y mejora la seguridad general.
 
 ---
 

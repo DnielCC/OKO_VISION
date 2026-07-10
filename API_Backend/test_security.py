@@ -1,8 +1,8 @@
 import requests
 import json
 
-# URL base de la API
-BASE_URL = "http://localhost:8000"
+# URL base de la API (en Docker expone el puerto 8002)
+BASE_URL = "http://localhost:8002"
 
 def test_public_endpoint():
     """Prueba que el endpoint raíz es público"""
@@ -25,10 +25,9 @@ def test_login_and_access():
     """Prueba el flujo completo de login y acceso a endpoints protegidos"""
     print("\n=== Prueba de login y acceso con token ===")
     
-    # Datos de prueba (necesitas tener un usuario en tu BD)
-    # Ajusta estos valores según tu base de datos
-    test_email = "admin@example.com"  # Cambia esto por un email válido en tu BD
-    test_password = "password123"     # Cambia esto por la contraseña correspondiente
+    # Datos de prueba válidos (configurados en la BD)
+    test_email = "ahortamtz@gmail.com"
+    test_password = "123456"
     
     # Intento de login
     login_data = {"email": test_email, "password": test_password}
@@ -65,7 +64,7 @@ if __name__ == "__main__":
         test_login_and_access()
         print("\n=== Todas las pruebas completadas ===")
     except requests.exceptions.ConnectionError:
-        print("\n⚠️  Error: No se pudo conectar a la API. Asegúrate de que el servidor esté corriendo en http://localhost:8000")
+        print("\n⚠️  Error: No se pudo conectar a la API. Asegúrate de que el servidor esté corriendo en http://localhost:8002")
     except AssertionError as e:
         print(f"\n❌ Prueba fallida: {e}")
     except Exception as e:

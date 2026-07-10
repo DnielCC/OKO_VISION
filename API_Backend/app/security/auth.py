@@ -12,7 +12,8 @@ SECRET_KEY = "your-secret-key-change-in-production-this-is-for-demo-only"  # En 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-security = HTTPBearer()
+# Esquema de seguridad para JWT (con auto_error=False para manejar 401 nosotros)
+security = HTTPBearer(auto_error=False)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
@@ -37,12 +38,19 @@ def get_current_user(
         detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if not credentials or not credentials.credentials:
+        raise credentials_exception
+    
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        usuario_id: int = payload.get("sub")
-        if usuario_id is None:
+        usuario_id_str: str = payload.get("sub")
+        if usuario_id_str is None:
             raise credentials_exception
+        usuario_id: int = int(usuario_id_str)
     except JWTError:
+        raise credentials_exception
+    except ValueError:
+        # Si no se puede convertir a int, credenciales inválidas
         raise credentials_exception
     
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()

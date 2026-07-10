@@ -38,8 +38,8 @@ def login(data: LoginData, db: Session = Depends(get_db)):
             detail="Credenciales incorrectas"
         )
     
-    # Crear token de acceso
-    access_token = create_access_token(data={"sub": usuario.id})
+    # Crear token de acceso (convertir id a string para JWT)
+    access_token = create_access_token(data={"sub": str(usuario.id)})
         
     # Login exitoso, retornar info y token
     return {
