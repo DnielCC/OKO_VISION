@@ -50,6 +50,14 @@ class Dispositivo(Base):
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String(250), nullable=False)
 
+
+class Sensor(Base):
+    __tablename__ = "sensores"
+    id = Column(Integer, primary_key=True, index=True)
+    nombrecampo = Column(String(255), nullable=False)
+    numpines = Column(Integer, nullable=False)
+    camaragramatica = Column(String(255))
+
 class Puerta(Base):
     __tablename__ = "puertas"
     id = Column(Integer, primary_key=True, index=True)

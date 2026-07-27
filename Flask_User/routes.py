@@ -15,14 +15,21 @@ def get_api_data(endpoint):
         # Se agrega timeout de 5 segundos para evitar que la petición se quede cargando
         response = requests.get(f"{API_URL}{endpoint}", timeout=5)
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            # Asegurarse de devolver una lista incluso si la API devuelve un dict
+            if isinstance(data, list):
+                return data
+            elif isinstance(data, dict) and "data" in data and isinstance(data["data"], list):
+                return data["data"]
+            elif isinstance(data, dict):
+                # Si es un dict único, devolverlo como lista de un elemento
+                return [data]
         print(f"API returned status {response.status_code} for {endpoint}")
     except requests.exceptions.Timeout:
         print(f"Timeout connecting to API at {API_URL}")
-        return "TIMEOUT"
     except Exception as e:
         print(f"Error connecting to API: {e}")
-        return "ERROR"
+    # Siempre devolver una lista vacía en caso de error
     return []
 
 def login_required(f):
@@ -89,10 +96,10 @@ def dashboard():
     
     # Obtener datos reales de la API
     all_vehicles = get_api_data("/vehiculos/")
-    user_vehicles = [v for v in all_vehicles if v['owner_id'] == user_id]
+    user_vehicles = [v for v in all_vehicles if isinstance(v, dict) and v.get('owner_id') == user_id]
     
     all_access = get_api_data("/accesos/")
-    user_access = [a for a in all_access if a['user_id'] == user_id][:5]
+    user_access = [a for a in all_access if isinstance(a, dict) and a.get('user_id') == user_id][:5]
     
     user_info = {
         'nombre': (session.get('user_nombre', '') + ' ' + session.get('user_apellidos', '')).strip() or session.get('user_username', ''),
@@ -241,6 +248,6 @@ def historial():
     }
     
     all_access = get_api_data("/accesos/")
-    user_access = [a for a in all_access if a['user_id'] == user_id]
+    user_access = [a for a in all_access if isinstance(a, dict) and a.get('user_id') == user_id]
     
     return render_template('historial.html', user=user_info, accesos=user_access)

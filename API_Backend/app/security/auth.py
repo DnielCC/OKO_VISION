@@ -1,59 +1,101 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
+import bcrypt
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+from pydantic_settings import BaseSettings
 from app.data.db import get_db
 from app.data.database import Usuario, Persona
 
+
+class Settings(BaseSettings):
+    secret_key: str = "demo-secret-key-change-in-production"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+
+    class Config:
+        env_file = ".env"
+
+
 # Configuración JWT
-SECRET_KEY = "your-secret-key-change-in-production-this-is-for-demo-only"  # En producción usar variable de entorno
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+settings = Settings()
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 # Esquema de seguridad para JWT (con auto_error=False para manejar 401 nosotros)
 security = HTTPBearer(auto_error=False)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verificar_contraseña(contraseña_plana, contraseña_encriptada):
+    """Verifica que la contraseña plana coincida con la encriptada.
+    Devuelve False si el hash guardado no es un bcrypt válido (en lugar de
+    explotar con ValueError: Invalid salt) para evitar 500 en login."""
+    if not isinstance(contraseña_plana, str) or not isinstance(contraseña_encriptada, str):
+        return False
+    contraseña_encriptada = contraseña_encriptada.strip()
+    if not contraseña_encriptada:
+        return False
+    # bcrypt salts válidos empiezan por $2a$, $2b$, $2y$ y miden al menos 60 chars
+    if not (
+        len(contraseña_encriptada) >= 60
+        and contraseña_encriptada.startswith(('$2a$', '$2b$', '$2y$'))
+    ):
+        return False
+    try:
+        contraseña_truncada = contraseña_plana[:72]
+        return bool(bcrypt.checkpw(
+            contraseña_truncada.encode('utf-8'),
+            contraseña_encriptada.encode('utf-8'),
+        ))
+    except (ValueError, TypeError):
+        return False
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def obtener_hash_contraseña(contraseña):
+    """Genera el hash bcrypt de una contraseña"""
+    # Truncar a 72 bytes como recomienda bcrypt
+    contraseña_truncada = contraseña[:72]
+    # Generar salt y hash
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(contraseña_truncada.encode('utf-8'), salt).decode('utf-8')
 
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+def crear_token_acceso(datos: dict):
+    """Crea un token de acceso JWT con los datos proporcionados"""
+    a_codificar = datos.copy()
+    expiracion = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    a_codificar.update({"exp": expiracion})
+    token_jwt = jwt.encode(a_codificar, SECRET_KEY, algorithm=ALGORITHM)
+    return token_jwt
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+def obtener_usuario_actual(
+    credenciales: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
-    credentials_exception = HTTPException(
+    """
+    Obtiene el usuario actual a partir del token JWT.
+    Lanza 401 si el token es inválido o el usuario no existe.
+    """
+    excepcion_credenciales = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    if not credentials or not credentials.credentials:
-        raise credentials_exception
+    if not credenciales or not credenciales.credentials:
+        raise excepcion_credenciales
     
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(credenciales.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         usuario_id_str: str = payload.get("sub")
         if usuario_id_str is None:
-            raise credentials_exception
+            raise excepcion_credenciales
         usuario_id: int = int(usuario_id_str)
     except JWTError:
-        raise credentials_exception
+        raise excepcion_credenciales
     except ValueError:
         # Si no se puede convertir a int, credenciales inválidas
-        raise credentials_exception
+        raise excepcion_credenciales
     
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if usuario is None:
-        raise credentials_exception
+        raise excepcion_credenciales
     return usuario

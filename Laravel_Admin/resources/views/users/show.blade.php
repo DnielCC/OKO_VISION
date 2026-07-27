@@ -54,10 +54,17 @@
             <h4 class="text-gray-500 uppercase text-xs tracking-widest font-semibold mb-3 border-b border-gray-800 pb-2">Status del Sistema</h4>
             <div class="flex justify-between items-center mb-2">
                 <span class="text-gray-400 text-sm">Estado de Cuenta</span>
-                <span class="text-green-400 text-sm flex items-center font-mono">
-                    <span class="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_5px_#22c55e]"></span>
-                    Activa
-                </span>
+                @if($user->activo)
+                    <span class="text-green-400 text-sm flex items-center font-mono">
+                        <span class="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_5px_#22c55e]"></span>
+                        Activa
+                    </span>
+                @else
+                    <span class="text-red-400 text-sm flex items-center font-mono">
+                        <span class="w-2 h-2 rounded-full bg-red-500 mr-2 shadow-[0_0_5px_#ef4444]"></span>
+                        Inactiva
+                    </span>
+                @endif
             </div>
             <div class="flex justify-between items-center mb-2">
                 <span class="text-gray-400 text-sm">Registrado Desde</span>

@@ -4,83 +4,83 @@ from app.data.db import get_db
 from app.data.database import Usuario
 from app.models.user import UsuarioCreate, UsuarioUpdate
 from app.data.database import Usuario, Persona
-from app.security.auth import get_password_hash, get_current_user
+from app.security.auth import obtener_hash_contraseña, obtener_usuario_actual
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 @router.get("/")
-def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def obtener_todos(db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     # Unimos con Persona para obtener el email y nombre para el portal de usuario
-    results = db.query(Usuario, Persona).join(Persona, Usuario.id_persona == Persona.id).all()
-    output = []
-    for user, persona in results:
-        output.append({
-            "id": user.id,
-            "username": user.identificador,
+    resultados = db.query(Usuario, Persona).join(Persona, Usuario.id_persona == Persona.id).all()
+    salida = []
+    for usuario, persona in resultados:
+        salida.append({
+            "id": usuario.id,
+            "username": usuario.identificador,
             "email": persona.mail,
             "nombre": persona.nombre,
             "apellidos": persona.apellidos,
-            "id_rol": user.id_rol,
+            "id_rol": usuario.id_rol,
             "id_persona": persona.id,
             "foto": persona.foto
         })
-    return output
+    return salida
 
 @router.get("/{usuario_id}")
-def get_one(usuario_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def obtener_uno(usuario_id: int, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario
 
 @router.post("/")
-def create(data: UsuarioCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def crear(datos: UsuarioCreate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     # Hashear contraseña antes de guardar
-    user_data = data.model_dump()
-    user_data["password"] = get_password_hash(user_data["password"])
-    nuevo = Usuario(**user_data)
+    datos_usuario = datos.model_dump()
+    datos_usuario["password"] = obtener_hash_contraseña(datos_usuario["password"])
+    nuevo = Usuario(**datos_usuario)
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
     return nuevo
 
 @router.put("/{usuario_id}")
-def update(usuario_id: int, data: UsuarioCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def actualizar(usuario_id: int, datos: UsuarioCreate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="No encontrado")
 
-    user_data = data.model_dump()
-    if "password" in user_data and user_data["password"]:
-        user_data["password"] = get_password_hash(user_data["password"])
+    datos_usuario = datos.model_dump()
+    if "password" in datos_usuario and datos_usuario["password"]:
+        datos_usuario["password"] = obtener_hash_contraseña(datos_usuario["password"])
 
-    for key, value in user_data.items():
-        setattr(usuario, key, value)
+    for clave, valor in datos_usuario.items():
+        setattr(usuario, clave, valor)
 
     db.commit()
     return usuario
 
 @router.patch("/{usuario_id}")
-def patch(usuario_id: int, data: UsuarioUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def parchear(usuario_id: int, datos: UsuarioUpdate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="No encontrado")
 
-    update_data = data.model_dump(exclude_unset=True)
-    if "password" in update_data and update_data["password"]:
-        update_data["password"] = get_password_hash(update_data["password"])
+    datos_actualizacion = datos.model_dump(exclude_unset=True)
+    if "password" in datos_actualizacion and datos_actualizacion["password"]:
+        datos_actualizacion["password"] = obtener_hash_contraseña(datos_actualizacion["password"])
 
-    for key, value in update_data.items():
-        setattr(usuario, key, value)
+    for clave, valor in datos_actualizacion.items():
+        setattr(usuario, clave, valor)
 
     db.commit()
     return usuario
 
 @router.delete("/{usuario_id}")
-def delete(
+def eliminar(
     usuario_id: int,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual)
 ):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:

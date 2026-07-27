@@ -30,7 +30,7 @@ def test_login_and_access():
     test_password = "123456"
     
     # Intento de login
-    login_data = {"email": test_email, "password": test_password}
+    login_data = {"email": test_email, "contraseña": test_password}
     print(f"Intentando login con: {test_email}")
     login_response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
     print(f"Login Status Code: {login_response.status_code}")

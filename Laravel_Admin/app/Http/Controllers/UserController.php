@@ -24,11 +24,12 @@ class UserController extends Controller
     public function index(Request $request)
     {
         try {
+            $visitanteId = \App\Models\Role::idByName(\App\Models\Role::NAME_VISITANTE);
+
             $query = User::query()
                 ->join('personas', 'usuarios.id_persona', '=', 'personas.id')
                 ->select('usuarios.*', 'personas.nombre', 'personas.apellidos', 'personas.mail as email', 'personas.telefono', 'personas.foto');
             
-            // Búsqueda por nombre completo, identificador o correo
             if ($request->filled('search')) {
                 $search = $request->get('search');
                 $query->where(function($q) use ($search) {
@@ -39,17 +40,28 @@ class UserController extends Controller
                 });
             }
 
-            // Filtro por Rol en staff
             if ($request->filled('role')) {
-                $role_id = $request->get('role');
-                $usersQuery = (clone $query)->where('usuarios.id_rol', $role_id)->where('usuarios.id_rol', '!=', 3);
+                $role_id = (int) $request->get('role');
+                $usersQuery = (clone $query)->where('usuarios.id_rol', $role_id);
+                if ($visitanteId !== null) {
+                    $usersQuery->where('usuarios.id_rol', '!=', $visitanteId);
+                }
             } else {
-                $usersQuery = (clone $query)->where('usuarios.id_rol', '!=', 3);
+                $usersQuery = (clone $query);
+                if ($visitanteId !== null) {
+                    $usersQuery->where('usuarios.id_rol', '!=', $visitanteId);
+                }
             }
 
-            // Separar visitantes y paginar
+            $visitorsQuery = (clone $query);
+            if ($visitanteId !== null) {
+                $visitorsQuery->where('usuarios.id_rol', $visitanteId);
+            } else {
+                $visitorsQuery->whereRaw('1 = 0');
+            }
+
             $users = $usersQuery->paginate(10, ['*'], 'users_page')->withQueryString();
-            $visitors = (clone $query)->where('usuarios.id_rol', 3)->paginate(10, ['*'], 'visitors_page')->withQueryString();
+            $visitors = $visitorsQuery->paginate(10, ['*'], 'visitors_page')->withQueryString();
 
             return view('users.index', compact('users', 'visitors'));
         } catch (\Exception $e) {
@@ -62,7 +74,9 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('users.create');
+        $roles = \App\Models\Role::allOrdered();
+        $visitanteId = \App\Models\Role::idByName(\App\Models\Role::NAME_VISITANTE);
+        return view('users.create', compact('roles', 'visitanteId'));
     }
 
     /**
@@ -78,7 +92,7 @@ class UserController extends Controller
             'sexo' => 'nullable|in:H,M',
             'fecha_nacimiento' => 'nullable|date|before:today',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'id_rol' => 'required|integer|in:1,2,3',
+            'id_rol' => ['required', 'integer', Rule::exists('roles', 'id')],
             'identificador' => 'required|string|min:3|max:15',
             'password' => 'required|string|min:8|max:64|regex:/[A-Za-z]/|regex:/[0-9]/',
         ], [
@@ -163,7 +177,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         try {
-            return view('users.edit', compact('user'));
+            $roles = \App\Models\Role::allOrdered();
+            $visitanteId = \App\Models\Role::idByName(\App\Models\Role::NAME_VISITANTE);
+            return view('users.edit', compact('user', 'roles', 'visitanteId'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al cargar usuario para edición: ' . $e->getMessage());
         }
@@ -182,7 +198,7 @@ class UserController extends Controller
             'sexo' => 'nullable|in:H,M',
             'fecha_nacimiento' => 'nullable|date|before:today',
             'identificador' => 'required|string|max:15|min:3',
-            'id_rol' => 'required|integer|in:1,2,3',
+            'id_rol' => ['required', 'integer', Rule::exists('roles', 'id')],
             'password' => 'nullable|string|min:8|max:64|regex:/[A-Za-z]/|regex:/[0-9]/',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
         ], [
@@ -280,19 +296,25 @@ class UserController extends Controller
     }
 
     /**
-     * Toggle user status (simulado, ya que la API no tiene campo activo)
+     * Toggle user status (activo/inactivo). Se guarda directamente en la tabla usuarios local.
      */
     public function toggleStatus(User $user)
     {
         try {
-            // Como la API no tiene campo activo, simulamos el cambio
-            // En una implementación real, necesitaríamos un endpoint PATCH para esto
-            
-            $status = 'activado'; // Simulación
-            
+            $nuevoEstado = !(bool) $user->activo;
+
+            \Illuminate\Support\Facades\DB::table('usuarios')
+                ->where('id', $user->id)
+                ->update([
+                    'activo' => $nuevoEstado ? 1 : 0,
+                ]);
+
+            $status = $nuevoEstado ? 'activado' : 'desactivado';
+
             return redirect()->route('users.index')
                 ->with('success', "Usuario {$status} exitosamente.");
         } catch (\Exception $e) {
+            Log::error("Error toggle status user {$user->id}: " . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Error al cambiar estado del usuario: ' . $e->getMessage());
         }

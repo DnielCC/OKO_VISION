@@ -4,10 +4,16 @@
 
 @section('content')
 @php
-    $isVisitor = request('role') == 3;
+    $selRole = old('id_rol', request('role'));
+    if (is_string($selRole) || is_numeric($selRole)) $selRole = (int)$selRole;
+    $isVisitor = $visitanteId !== null && $selRole === (int)$visitanteId;
     $pageTitle = $isVisitor ? 'Nuevo Visitante' : 'Nuevo Registro';
     $icon = $isVisitor ? 'fa-id-badge' : 'fa-user-plus';
     $color = $isVisitor ? 'purple' : 'cyan';
+    $roleMap = [];
+    foreach ($roles as $id => $nombre) {
+        $roleMap[(string)$id] = $nombre;
+    }
 @endphp
 <div class="mb-8 animate-fade-in">
     <div class="flex items-center justify-between">
@@ -74,15 +80,15 @@
                             <div class="relative">
                                 @if($isVisitor)
                                     <select id="id_rol_display" class="w-full bg-gray-900/50 border border-gray-700 rounded-2xl py-4 pl-12 pr-10 text-gray-400 appearance-none cursor-not-allowed" disabled>
-                                        <option value="3" selected>Visitante</option>
+                                        <option value="{{ $visitanteId }}" selected>Visitante</option>
                                     </select>
-                                    <input type="hidden" name="id_rol" value="3">
+                                    <input type="hidden" name="id_rol" value="{{ $visitanteId }}">
                                 @else
                                     <select id="id_rol" name="id_rol" class="w-full bg-gray-900 border border-gray-700 rounded-2xl py-4 pl-12 pr-10 text-white appearance-none focus:border-{{ $color }}-500/50 focus:ring-0 transition-all cursor-pointer" required onchange="updateRolePreview(this)">
-                                        <option value="" disabled selected>Seleccionar...</option>
-                                        <option value="1" {{ old('id_rol', request('role')) == '1' ? 'selected' : '' }}>Admin Sistema</option>
-                                        <option value="2" {{ old('id_rol', request('role')) == '2' ? 'selected' : '' }}>Usuario</option>
-                                        <option value="3" {{ old('id_rol', request('role')) == '3' ? 'selected' : '' }}>Visitante</option>
+                                        <option value="" disabled {{ $selRole === null || $selRole === 0 ? 'selected' : '' }}>Seleccionar...</option>
+                                        @foreach($roles as $id => $nombre)
+                                            <option value="{{ $id }}" {{ $selRole === (int)$id ? 'selected' : '' }}>{{ $nombre }}</option>
+                                        @endforeach
                                     </select>
                                 @endif
                                 <i class="fas fa-user-shield absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 text-sm"></i>
@@ -242,6 +248,8 @@
 </style>
 
 <script>
+window.__ROLE_MAP__ = @json($roleMap);
+
 function previewImage(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
@@ -258,12 +266,11 @@ function updateNamePreview() {
 }
 
 function updateRolePreview(select) {
-    const roleMap = {
-        '1': 'Admin Sistema',
-        '2': 'Usuario',
-        '3': 'Visitante'
-    };
-    document.getElementById('preview-role').textContent = roleMap[select.value] || 'Seleccionar Rol';
+    const el = document.getElementById('preview-role');
+    if (!el) return;
+    el.textContent = window.__ROLE_MAP__ && window.__ROLE_MAP__[select.value]
+        ? window.__ROLE_MAP__[select.value]
+        : 'Seleccionar Rol';
 }
 </script>
 @endsection

@@ -1,48 +1,47 @@
-# Dockerfile para aplicación Laravel_Admin optimizado
-FROM php:8.4-cli
+# Usar la imagen oficial de PHP 8.3 con Apache (perfecta para Laravel)
+FROM php:8.3-apache
 
-# Instalar dependencias del sistema y drivers de PostgreSQL
+# Instalar dependencias del sistema y extensiones PHP necesarias para Laravel y PostgreSQL
 RUN apt-get update && apt-get install -y \
     git \
     curl \
-    unzip \
+    bash \
+    libpng-dev \
     libonig-dev \
+    libxml2-dev \
     libpq-dev \
+    zip \
+    unzip \
+    && docker-php-ext-install pdo_pgsql pgsql mbstring exif pcntl bcmath gd \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensiones de PHP incluyendo pdo_pgsql
-RUN docker-php-ext-install mbstring bcmath opcache pdo_pgsql pgsql
+# Habilitar mod_rewrite de Apache para Laravel
+RUN a2enmod rewrite
 
-# Configuración agresiva de Opcache para máxima velocidad
-RUN { \
-        echo 'opcache.memory_consumption=256'; \
-        echo 'opcache.interned_strings_buffer=16'; \
-        echo 'opcache.max_accelerated_files=20000'; \
-        echo 'opcache.revalidate_freq=0'; \
-        echo 'opcache.fast_shutdown=1'; \
-        echo 'opcache.enable_cli=1'; \
-    } > /usr/local/etc/php/conf.d/opcache-optimized.ini
-
-# Instalar Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Copiar configuración personalizada de Apache
+COPY apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Establecer el directorio de trabajo
 WORKDIR /var/www/html
 
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Copiar archivos del proyecto
 COPY . .
 
-# Instalar dependencias con Composer y optimizar
+# Instalar dependencias de Composer
 RUN composer install --optimize-autoloader --no-dev --ignore-platform-reqs
 
-# Permisos para storage y cache
-RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs
-RUN chmod -R 777 storage bootstrap/cache
+# Configurar permisos correctos para Laravel
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Exponer el puerto
-EXPOSE 8000
+# Dar permisos de ejecución al script de arranque
+RUN chmod +x /var/www/html/entrypoint.sh
 
-# Comando para ejecutar la aplicación
-CMD php artisan migrate --force && \
-    php artisan db:seed --force && \
-    php artisan serve --host=0.0.0.0 --port=8000
+# Exponer el puerto 80 (Apache usa este puerto por defecto)
+EXPOSE 80
+
+# Comando para ejecutar el script de arranque
+ENTRYPOINT ["/var/www/html/entrypoint.sh"]

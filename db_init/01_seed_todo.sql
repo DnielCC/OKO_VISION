@@ -326,7 +326,43 @@ ALTER SEQUENCE public.dispositivos_id_seq OWNER TO oko_admin;
 -- Name: dispositivos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: oko_admin
 --
 
-ALTER SEQUENCE public.dispositivos_id_seq OWNED BY public.dispositivos.id;
+ALTERCREATE SEQUENCE public.dispositivos_id_seq OWNED BY public.dispositivos.id;
+
+
+--
+-- Name: sensores; Type: TABLE; Schema: public; Owner: oko_admin
+--
+
+CREATE TABLE public.sensores (
+    id integer NOT NULL,
+    nombrecampo character varying(255) NOT NULL,
+    numpines integer NOT NULL,
+    camaragramatica character varying(255)
+);
+
+
+ALTER TABLE public.sensores OWNER TO oko_admin;
+
+--
+-- Name: sensores_id_seq; Type: SEQUENCE; Schema: public; Owner: oko_admin
+--
+
+CREATE SEQUENCE public.sensores_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.sensores_id_seq OWNER TO oko_admin;
+
+--
+-- Name: sensores_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: oko_admin
+--
+
+ALTER SEQUENCE public.sensores_id_seq OWNED BY public.sensores.id;
 
 
 --
@@ -943,6 +979,13 @@ ALTER TABLE ONLY public.dispositivos ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
+-- Name: sensores id; Type: DEFAULT; Schema: public; Owner: oko_admin
+--
+
+ALTER TABLE ONLY public.sensores ALTER COLUMN id SET DEFAULT nextval('public.sensores_id_seq'::regclass);
+
+
+--
 -- Name: estatus id; Type: DEFAULT; Schema: public; Owner: oko_admin
 --
 
@@ -1089,6 +1132,15 @@ INSERT INTO public.accesos VALUES (2, 3, 2, 1, 1, '2026-03-29 02:43:36.119847', 
 --
 
 INSERT INTO public.dispositivos VALUES (1, 'Cámara 1');
+
+
+--
+-- Data for Name: sensores; Type: TABLE DATA; Schema: public; Owner: oko_admin
+--
+
+INSERT INTO public.sensores VALUES (1, 'Cámara Principal', 8, 'Área de acceso principal');
+INSERT INTO public.sensores VALUES (2, 'Sensor de Proximidad', 4, 'Entrada de vehículos');
+INSERT INTO public.sensores VALUES (3, 'Cámara Lateral', 6, 'Zona de estacionamiento');
 
 
 --
@@ -1273,6 +1325,13 @@ SELECT pg_catalog.setval('public.dispositivos_id_seq', 1, true);
 
 
 --
+-- Name: sensores_id_seq; Type: SEQUENCE SET; Schema: public; Owner: oko_admin
+--
+
+SELECT pg_catalog.setval('public.sensores_id_seq', 3, true);
+
+
+--
 -- Name: estatus_id_seq; Type: SEQUENCE SET; Schema: public; Owner: oko_admin
 --
 
@@ -1432,6 +1491,14 @@ ALTER TABLE ONLY public.departamentos
 
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sensores sensores_pkey; Type: CONSTRAINT; Schema: public; Owner: oko_admin
+--
+
+ALTER TABLE ONLY public.sensores
+    ADD CONSTRAINT sensores_pkey PRIMARY KEY (id);
 
 
 --
@@ -1634,6 +1701,13 @@ CREATE INDEX ix_departamentos_id ON public.departamentos USING btree (id);
 --
 
 CREATE INDEX ix_dispositivos_id ON public.dispositivos USING btree (id);
+
+
+--
+-- Name: ix_sensores_id; Type: INDEX; Schema: public; Owner: oko_admin
+--
+
+CREATE INDEX ix_sensores_id ON public.sensores USING btree (id);
 
 
 --

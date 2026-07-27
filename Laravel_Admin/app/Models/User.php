@@ -10,47 +10,71 @@ class User extends Authenticatable
     use ApiUserTrait;
 
     protected $table = 'usuarios';
-    
+
     protected $fillable = [
-        'id',
-        'username',
-        'email',
-        'nombre',
-        'apellidos',
         'id_persona',
+        'id_carrera',
+        'id_departamento',
         'id_rol',
         'identificador',
-        'telefono',
+        'password',
         'activo',
-        'password'
     ];
 
-    // Relación con Personas
     public function persona()
     {
         return $this->belongsTo('App\Models\Persona', 'id_persona', 'id');
     }
 
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'id_rol');
+    }
+
+    public function accessLogs()
+    {
+        return $this->hasMany(AccessLog::class, 'user_id');
+    }
+
+    public function getRoleNameAttribute(): ?string
+    {
+        return $this->role?->nombre;
+    }
+
     public function getEmailAttribute()
     {
-        // En Eloquent real si no lo trae el query, consultar a través de API
-        // O si ya está seteado (por el auth login), lo regresa
-        return $this->attributes['email'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('mail') : null);
+        $val = $this->attributes['email'] ?? null;
+        if ($val) return $val;
+        return $this->id_persona
+            ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('mail')
+            : null;
     }
 
     public function getNombreAttribute()
     {
-        return $this->attributes['nombre'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('nombre') : null);
+        $val = $this->attributes['nombre'] ?? null;
+        if ($val) return $val;
+        return $this->id_persona
+            ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('nombre')
+            : null;
     }
 
     public function getApellidosAttribute()
     {
-        return $this->attributes['apellidos'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('apellidos') : null);
+        $val = $this->attributes['apellidos'] ?? null;
+        if ($val) return $val;
+        return $this->id_persona
+            ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('apellidos')
+            : null;
     }
 
     public function getTelefonoAttribute()
     {
-        return $this->attributes['telefono'] ?? ($this->id_persona ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('telefono') : null);
+        $val = $this->attributes['telefono'] ?? null;
+        if ($val) return $val;
+        return $this->id_persona
+            ? \Illuminate\Support\Facades\DB::table('personas')->where('id', $this->id_persona)->value('telefono')
+            : null;
     }
 
     protected $hidden = [
@@ -59,11 +83,14 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'id' => 'integer',
-        'id_persona' => 'integer',
-        'id_rol' => 'integer',
-        'activo' => 'boolean',
-        'email_verified_at' => 'datetime',
+        'id'              => 'integer',
+        'id_persona'      => 'integer',
+        'id_carrera'      => 'integer',
+        'id_departamento' => 'integer',
+        'id_rol'          => 'integer',
+        'activo'          => 'boolean',
+        'created_at'      => 'datetime',
+        'updated_at'      => 'datetime',
     ];
 
     protected $attributes = [

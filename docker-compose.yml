@@ -63,7 +63,7 @@ services:
     build: ./Laravel_Admin
     container_name: oko_vision_laravel
     ports:
-      - "8001:8000"
+      - "8001:80"
     environment:
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres_db
@@ -72,7 +72,6 @@ services:
       - DB_USERNAME=oko_admin
       - DB_PASSWORD=oko_password
       - API_URL=http://api_backend:8000
-      - PHP_CLI_SERVER_WORKERS=8
       - APP_DEBUG=true
       - SESSION_DRIVER=cookie
       - APP_KEY=base64:FaBcBKAnX5hFuBM1O4B67bVHVTQRZr/iLem9jkeFG5U=
@@ -90,6 +89,7 @@ services:
         condition: service_started
     networks:
       - oko_network
+
 
 
 networks:

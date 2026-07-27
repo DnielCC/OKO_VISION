@@ -52,12 +52,12 @@ def seed_new_db():
     db.commit()
     for p in personas: db.refresh(p)
 
-    from app.security.auth import get_password_hash
+    from app.security.auth import obtener_hash_contraseña
     # 4. Usuarios
     usuarios = [
-        database.Usuario(id_persona=personas[0].id, id_rol=roles[0].id, identificador="admin", password=get_password_hash("12345678")),
-        database.Usuario(id_persona=personas[1].id, id_rol=roles[1].id, identificador="juan_perez", password=get_password_hash("1234juan")),
-        database.Usuario(id_persona=personas[2].id, id_rol=roles[1].id, identificador="maria_garcia", password=get_password_hash("1234maria"))
+        database.Usuario(id_persona=personas[0].id, id_rol=roles[0].id, identificador="admin", password=obtener_hash_contraseña("12345678")),
+        database.Usuario(id_persona=personas[1].id, id_rol=roles[1].id, identificador="juan_perez", password=obtener_hash_contraseña("1234juan")),
+        database.Usuario(id_persona=personas[2].id, id_rol=roles[1].id, identificador="maria_garcia", password=obtener_hash_contraseña("1234maria"))
     ]
     db.add_all(usuarios)
     db.commit()

@@ -4,7 +4,7 @@ from app.data.db import get_db
 from app.data.database import Persona, Usuario
 from pydantic import BaseModel
 from typing import Optional
-from app.security.auth import get_current_user
+from app.security.auth import obtener_usuario_actual
 
 class PersonaBase(BaseModel):
     nombre: str
@@ -30,7 +30,7 @@ class PersonaUpdate(BaseModel):
 router = APIRouter(prefix="/personas", tags=["Personas"])
 
 @router.get("/")
-def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def obtener_todos(db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     personas = db.query(Persona).all()
     return [
         {
@@ -47,7 +47,7 @@ def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_c
     ]
 
 @router.get("/{persona_id}")
-def get_one(persona_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def obtener_uno(persona_id: int, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
@@ -64,50 +64,50 @@ def get_one(persona_id: int, db: Session = Depends(get_db), current_user: Usuari
     }
 
 @router.post("/")
-def create(data: PersonaCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    nueva = Persona(**data.model_dump())
+def crear(datos: PersonaCreate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
+    nueva = Persona(**datos.model_dump())
     db.add(nueva)
     db.commit()
     db.refresh(nueva)
     return nueva
 
 @router.put("/{persona_id}")
-def update(persona_id: int, data: PersonaCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def actualizar(persona_id: int, datos: PersonaCreate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
 
-    for key, value in data.model_dump().items():
-        setattr(persona, key, value)
+    for clave, valor in datos.model_dump().items():
+        setattr(persona, clave, valor)
 
     db.commit()
     return persona
 
 @router.patch("/{persona_id}")
-def patch(persona_id: int, data: PersonaUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def parchear(persona_id: int, datos: PersonaUpdate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
 
-    update_data = data.model_dump(exclude_unset=True)
+    datos_actualizacion = datos.model_dump(exclude_unset=True)
     
-    # Convertir fecha si viene en el patch
-    if "fecha_nacimiento" in update_data and update_data["fecha_nacimiento"]:
+    # Convertir fecha si viene en el parche
+    if "fecha_nacimiento" in datos_actualizacion and datos_actualizacion["fecha_nacimiento"]:
         try:
             from datetime import datetime
-            update_data["fecha_nacimiento"] = datetime.strptime(update_data["fecha_nacimiento"], "%Y-%m-%d").date()
+            datos_actualizacion["fecha_nacimiento"] = datetime.strptime(datos_actualizacion["fecha_nacimiento"], "%Y-%m-%d").date()
         except Exception:
             pass
 
-    for key, value in update_data.items():
-        setattr(persona, key, value)
+    for clave, valor in datos_actualizacion.items():
+        setattr(persona, clave, valor)
 
     db.commit()
     db.refresh(persona)
     return persona
 
 @router.delete("/{persona_id}")
-def delete(persona_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def eliminar(persona_id: int, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")

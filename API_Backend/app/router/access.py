@@ -4,7 +4,7 @@ from app.data.db import get_db
 from app.data.database import Acceso, Persona, Puerta, Dispositivo, Usuario
 from pydantic import BaseModel
 from typing import Optional
-from app.security.auth import get_current_user
+from app.security.auth import obtener_usuario_actual
 
 class AccesoCreate(BaseModel):
     id_persona: int
@@ -19,24 +19,24 @@ class AccesoCreate(BaseModel):
 router = APIRouter(prefix="/accesos", tags=["Accesos"])
 
 @router.get("/")
-def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    results = db.query(Acceso, Persona).join(Persona, Acceso.id_persona == Persona.id).all()
-    output = []
-    for access, persona in results:
-        output.append({
-            "id": access.id,
-            "user_id": access.id_persona,
+def obtener_todos(db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
+    resultados = db.query(Acceso, Persona).join(Persona, Acceso.id_persona == Persona.id).all()
+    salida = []
+    for acceso, persona in resultados:
+        salida.append({
+            "id": acceso.id,
+            "user_id": acceso.id_persona,
             "user_name": f"{persona.nombre} {persona.apellidos}",
             "vehicle_plate": "N/A",
-            "access_time": access.fecha_hora.isoformat(),
-            "access_type": "ENTRY" if access.tipo_acceso == 'P' else "EXIT",
-            "is_authorized": True if access.resultado == 'p' else False
+            "access_time": acceso.fecha_hora.isoformat(),
+            "access_type": "ENTRY" if acceso.tipo_acceso == 'P' else "EXIT",
+            "is_authorized": True if acceso.resultado == 'p' else False
         })
-    return output
+    return salida
 
 @router.post("/")
-def create(data: AccesoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    nuevo = Acceso(**data.model_dump())
+def crear(datos: AccesoCreate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
+    nuevo = Acceso(**datos.model_dump())
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)

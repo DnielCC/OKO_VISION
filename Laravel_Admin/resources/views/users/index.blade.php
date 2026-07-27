@@ -1,5 +1,11 @@
 @extends('layouts.app')
 
+<?php
+$rolesOptions = \App\Models\Role::allOrdered();
+$visitanteId = \App\Models\Role::idByName(\App\Models\Role::NAME_VISITANTE);
+$rolesStaff = $rolesOptions->filter(fn ($nombre, $id) => (int)$id !== (int)$visitanteId);
+?>
+
 @section('title', 'Usuarios')
 
 @section('content')
@@ -10,7 +16,7 @@
         <p class="text-gray-400 mt-1">Administra cuentas de acceso y registros temporales del sistema</p>
     </div>
     <div class="flex gap-3">
-        <a href="{{ route('users.create', ['role' => 3]) }}" class="btn-secondary flex items-center">
+        <a href="{{ route('users.create', ['role' => $visitanteId]) }}" class="btn-secondary flex items-center">
             <i class="fas fa-id-badge mr-2"></i>
             Añadir Visitante
         </a>
@@ -47,22 +53,23 @@
 
 <!-- Filtros de Búsqueda -->
 <div class="card mb-6">
-    <form action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-end gap-4">
+    <form id="users-filter-form" action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-end gap-4">
         <div class="flex-grow max-w-md">
             <label for="search" class="block text-sm font-medium text-gray-400 mb-1">Buscar por Nombre, Identificador o Correo</label>
             <div class="relative">
-                <input type="text" name="search" id="search" value="{{ request('search') }}" 
+                <input type="text" name="search" id="search" value="{{ request('search') }}"
                        class="input-field w-full pl-10" placeholder="Ej. Juan, adm-01, correo@okovision.com">
                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
         </div>
-        
+
         <div>
             <label for="role" class="block text-sm font-medium text-gray-400 mb-1">Filtrar Staff por Rol</label>
             <select name="role" id="role" class="input-field">
                 <option value="">Todos los Roles</option>
-                <option value="1" {{ request('role') == '1' ? 'selected' : '' }}>Administrador</option>
-                <option value="2" {{ request('role') == '2' ? 'selected' : '' }}>Usuario</option>
+                @foreach($rolesStaff as $id => $nombre)
+                    <option value="{{ $id }}" {{ request('role') !== null && (int) request('role') === (int) $id ? 'selected' : '' }}>{{ $nombre }}</option>
+                @endforeach
             </select>
         </div>
 
@@ -70,7 +77,7 @@
             <button type="submit" class="btn-primary" style="height: 42px;">
                 <i class="fas fa-filter mr-2"></i> Filtrar
             </button>
-            @if(request()->has('search') || request()->has('role'))
+            @if(request()->hasAny(['search', 'role']))
                 <a href="{{ route('users.index') }}" class="btn-secondary ml-2" style="height: 42px; display: inline-flex; align-items: center;">
                     Limpiar
                 </a>
@@ -84,6 +91,9 @@
 <!-- ========================================== -->
 <h3 class="text-xl font-semibold text-white mb-4 flex items-center">
     <i class="fas fa-user-shield text-cyan-400 mr-2"></i> Staff del Sistema
+    <span class="ml-3 text-xs text-gray-500 font-mono bg-gray-800/60 px-2 py-1 rounded-full">
+        @if($users->total() > 0) {{ $users->firstItem() }} - {{ $users->lastItem() }} / {{ $users->total() }} @endif
+    </span>
 </h3>
 
 <div class="card overflow-hidden mb-10">
@@ -95,28 +105,32 @@
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm">Usuario</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm">Matrícula</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm">Rol</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Estado</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm">Contacto</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-800">
                 @forelse($users as $user)
-                <tr class="hover:bg-gray-800/30 transition-colors">
+                <tr class="hover:bg-gray-800/30 transition-colors {{ !$user->activo ? 'opacity-50' : '' }}" data-user-id="{{ $user->id }}">
                     <td class="px-6 py-4 text-gray-400 font-mono text-xs">#{{ $user->id }}</td>
                     <td class="px-6 py-4">
                         <div class="flex items-center">
                             @php
-                                $userFoto = $user->foto ?? ($user->persona->foto ?? null);
+                                $userFoto = $user->foto ?? (($user->persona->foto ?? null) ? $user->persona->foto : null);
                             @endphp
                             @if($userFoto)
                                 <img src="{{ $userFoto }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover mr-3 border border-cyan-400/30 shadow-[0_0_10px_rgba(0,242,255,0.2)]">
                             @else
-                                <div class="w-8 h-8 bg-cyan-400/10 rounded-full flex items-center justify-center mr-3 text-cyan-400 font-bold uppercase">
-                                    {{ substr($user->nombre, 0, 1) }}{{ substr($user->apellidos, 0, 1) }}
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 font-bold uppercase
+                                    {{ $user->isAdmin() ? 'bg-red-400/10 text-red-400' : ($user->isVisitante() ? 'bg-purple-400/10 text-purple-400' : 'bg-cyan-400/10 text-cyan-400') }}">
+                                    {{ substr((string)($user->nombre ?? ''), 0, 1) }}{{ substr((string)($user->apellidos ?? ''), 0, 1) }}
                                 </div>
                             @endif
                             <div>
-                                <span class="text-white font-medium block">{{ $user->nombre }} {{ $user->apellidos }}</span>
+                                <span class="text-white font-medium block">
+                                    {{ $user->nombre }} {{ $user->apellidos }}
+                                </span>
                             </div>
                         </div>
                     </td>
@@ -126,11 +140,10 @@
                         </span>
                     </td>
                     <td class="px-6 py-4">
-                        @if($user->isAdmin())
-                            <span class="bg-red-400/10 text-red-400 text-[10px] px-2 py-1 rounded-full border border-red-400/20 uppercase font-bold text-center inline-block w-24">Admin</span>
-                        @else
-                            <span class="bg-cyan-400/10 text-cyan-400 text-[10px] px-2 py-1 rounded-full border border-cyan-400/20 uppercase font-bold text-center inline-block w-24">Usuario</span>
-                        @endif
+                        {!! $user->role_badge !!}
+                    </td>
+                    <td class="px-6 py-4">
+                        {!! $user->status_badge !!}
                     </td>
                     <td class="px-6 py-4">
                         <p class="text-gray-300 text-sm"><i class="fas fa-envelope mr-1 text-gray-500 text-xs"></i> {{ $user->email }}</p>
@@ -146,6 +159,15 @@
                             <a href="{{ route('users.edit', $user) }}" class="text-yellow-400 hover:text-yellow-300 transition-colors p-2 bg-yellow-400/10 rounded" title="Editar Credenciales">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <form action="{{ route('users.toggle-status', $user) }}" method="POST" class="inline"
+                                  onsubmit="return confirm({{ !$user->activo ? "'¿Reactivar este usuario?'" : "'¿Desactivar este usuario? No podrá iniciar sesión mientras esté inactivo.'" }})">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="{{ $user->activo ? 'text-orange-400 hover:text-orange-300 bg-orange-400/10' : 'text-green-400 hover:text-green-300 bg-green-400/10' }} transition-colors p-2 rounded"
+                                        title="{{ $user->activo ? 'Desactivar usuario' : 'Reactivar usuario' }}">
+                                    <i class="fas {{ $user->activo ? 'fa-user-slash' : 'fa-user-check' }}"></i>
+                                </button>
+                            </form>
                             <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('¿Está seguro de eliminar este usuario de forma permanente?')">
                                 @csrf
                                 @method('DELETE')
@@ -158,7 +180,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                         <i class="fas fa-users-slash text-4xl mb-3 opacity-50 block"></i>
                         <p>No se encontraron datos para el Staff con los filtros actuales</p>
                     </td>
@@ -168,7 +190,7 @@
         </table>
     </div>
     <div class="mt-4 px-6 pb-4">
-        {{ $users->links('pagination::tailwind') }}
+        {{ $users->withQueryString()->links('pagination::tailwind') }}
     </div>
 </div>
 
@@ -177,6 +199,9 @@
 <!-- ========================================== -->
 <h3 class="text-xl font-semibold text-white mb-4 mt-8 flex items-center">
     <i class="fas fa-id-badge text-purple-400 mr-2"></i> Visitantes Registrados
+    <span class="ml-3 text-xs text-gray-500 font-mono bg-gray-800/60 px-2 py-1 rounded-full">
+        @if($visitors->total() > 0) {{ $visitors->firstItem() }} - {{ $visitors->lastItem() }} / {{ $visitors->total() }} @endif
+    </span>
 </h3>
 
 <div class="card overflow-hidden">
@@ -187,21 +212,25 @@
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm w-16">ID</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm">Visitante</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm">Pase Temporal</th>
+                    <th class="px-6 py-4 text-gray-400 font-medium text-sm">Estado</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm">Contacto</th>
                     <th class="px-6 py-4 text-gray-400 font-medium text-sm text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-800">
                 @forelse($visitors as $visitor)
-                <tr class="hover:bg-gray-800/30 transition-colors">
+                <tr class="hover:bg-gray-800/30 transition-colors {{ !$visitor->activo ? 'opacity-50' : '' }}">
                     <td class="px-6 py-4 text-gray-400 font-mono text-xs">#{{ $visitor->id }}</td>
                     <td class="px-6 py-4">
                         <div class="flex items-center">
-                            @if($visitor->persona && $visitor->persona->foto)
-                                <img src="{{ $visitor->persona->foto }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover mr-3 border border-purple-400/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                            @php
+                                $vFoto = $visitor->foto ?? (($visitor->persona->foto ?? null) ? $visitor->persona->foto : null);
+                            @endphp
+                            @if($vFoto)
+                                <img src="{{ $vFoto }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover mr-3 border border-purple-400/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
                             @else
                                 <div class="w-8 h-8 bg-purple-400/10 rounded-full flex items-center justify-center mr-3 text-purple-400 font-bold uppercase">
-                                    {{ substr($visitor->nombre, 0, 1) }}{{ substr($visitor->apellidos, 0, 1) }}
+                                    {{ substr((string)($visitor->nombre ?? ''), 0, 1) }}{{ substr((string)($visitor->apellidos ?? ''), 0, 1) }}
                                 </div>
                             @endif
                             <div>
@@ -214,6 +243,9 @@
                         <span class="text-purple-400 font-mono text-sm bg-purple-400/10 px-2 py-1 rounded">
                             <i class="fas fa-ticket-alt mr-1 text-xs text-gray-500"></i>{{ $visitor->identificador }}
                         </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {!! $visitor->status_badge !!}
                     </td>
                     <td class="px-6 py-4">
                         <p class="text-gray-300 text-sm"><i class="fas fa-envelope mr-1 text-gray-500 text-xs"></i> {{ $visitor->email ?: 'Sin correo' }}</p>
@@ -229,6 +261,15 @@
                             <a href="{{ route('users.edit', $visitor) }}" class="text-yellow-400 hover:text-yellow-300 transition-colors p-2 bg-yellow-400/10 rounded" title="Editar Credenciales">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <form action="{{ route('users.toggle-status', $visitor) }}" method="POST" class="inline"
+                                  onsubmit="return confirm({{ !$visitor->activo ? "'¿Reactivar este pase de visitante?'" : "'¿Desactivar este pase de visitante temporalmente?'" }})">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="{{ $visitor->activo ? 'text-orange-400 hover:text-orange-300 bg-orange-400/10' : 'text-green-400 hover:text-green-300 bg-green-400/10' }} transition-colors p-2 rounded"
+                                        title="{{ $visitor->activo ? 'Desactivar pase' : 'Reactivar pase' }}">
+                                    <i class="fas {{ $visitor->activo ? 'fa-user-slash' : 'fa-user-check' }}"></i>
+                                </button>
+                            </form>
                             <form action="{{ route('users.destroy', $visitor) }}" method="POST" class="inline" onsubmit="return confirm('¿Está seguro de revocar y eliminar este pase de visitante?')">
                                 @csrf
                                 @method('DELETE')
@@ -241,7 +282,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                         <i class="fas fa-id-card-alt text-4xl mb-3 opacity-50 block"></i>
                         <p>No hay visitantes registrados con los parámetros actuales</p>
                     </td>
@@ -251,7 +292,28 @@
         </table>
     </div>
     <div class="mt-4 px-6 pb-4">
-        {{ $visitors->links('pagination::tailwind') }}
+        {{ $visitors->withQueryString()->links('pagination::tailwind') }}
     </div>
 </div>
+
+<script>
+// Auto submit para filtros (misma UX que alertas)
+const filterSelect = document.getElementById('role');
+if (filterSelect) {
+    filterSelect.addEventListener('change', () => document.getElementById('users-filter-form').submit());
+}
+const searchInput = document.getElementById('search');
+if (searchInput) {
+    let searchTimer;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            document.getElementById('users-filter-form').submit();
+        }, 600);
+    });
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('users-filter-form').submit();
+    });
+}
+</script>
 @endsection

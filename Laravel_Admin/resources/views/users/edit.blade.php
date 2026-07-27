@@ -3,6 +3,12 @@
 @section('title', 'Editar Usuario')
 
 @section('content')
+@php
+    $userRolId = (int)($user->id_rol ?? 0);
+    $isVisitor = $visitanteId !== null && $userRolId === (int)$visitanteId;
+    $oldRol = old('id_rol');
+    $selectRol = $oldRol !== null ? (int)$oldRol : $userRolId;
+@endphp
 <div class="mb-8 animate-fade-in">
     <div class="flex items-center justify-between">
         <div>
@@ -81,22 +87,25 @@
                         <div class="space-y-2">
                             <label for="id_rol" class="block text-[10px] font-bold text-orange-500 uppercase tracking-widest ml-1">Nivel de Acceso</label>
                             <div class="relative group">
-                                @if($user->id_rol == 3)
-                                    <!-- Si es visitante, el rol está bloqueado -->
+                                @if($isVisitor)
                                     <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded-2xl py-4 pl-12 pr-10 text-gray-400 font-bold flex items-center cursor-not-allowed">
                                         Visitante
                                     </div>
-                                    <input type="hidden" name="id_rol" value="3">
+                                    <input type="hidden" name="id_rol" value="{{ $visitanteId }}">
                                 @else
                                     <select id="id_rol" name="id_rol" class="w-full bg-gray-900 border border-gray-700 rounded-2xl py-4 pl-12 pr-10 text-white appearance-none focus:border-orange-500/50 focus:ring-0 transition-all cursor-pointer group-hover:border-gray-600">
-                                        <option value="1" {{ old('id_rol', $user->id_rol) == '1' ? 'selected' : '' }}>Administrador</option>
-                                        <option value="2" {{ old('id_rol', $user->id_rol) == '2' ? 'selected' : '' }}>Usuario</option>
+                                        @foreach($roles as $id => $nombre)
+                                            <option value="{{ $id }}" {{ $selectRol === (int)$id ? 'selected' : '' }}>{{ $nombre }}</option>
+                                        @endforeach
                                     </select>
                                     <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 text-[10px]"></i>
+                                    <p class="text-[9px] text-gray-500 ml-1 italic mt-1">
+                                        Cambiar a Visitante moverá este perfil a la sección "Visitantes Registrados"
+                                    </p>
                                 @endif
                                 <i class="fas fa-user-shield absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 text-sm transition-colors group-focus-within:text-orange-500"></i>
                             </div>
-                            @if($user->id_rol == 3)
+                            @if($isVisitor)
                                 <p class="text-[9px] text-gray-500 ml-1 italic">El rol de visitante no puede ser cambiado</p>
                             @endif
                         </div>

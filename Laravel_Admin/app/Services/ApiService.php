@@ -181,13 +181,27 @@ class ApiService
         try {
             $response = $this->request('POST', '/auth/login', [
                 'email' => $credentials['email'],
-                'password' => $credentials['password']
+                'contraseña' => $credentials['password']
             ]);
-            
-            // Si funciona, devolver el usuario y un token simulado (hasta que se implemente JWT en backend)
+
+            $user = $response;
+            if (is_object($response) && isset($response->access_token)) {
+                $user = new \stdClass();
+                $user->id              = $response->id ?? null;
+                $user->username        = $response->username ?? null;
+                $user->email           = $response->email ?? null;
+                $user->nombre          = $response->nombre ?? null;
+                $user->apellidos       = $response->apellidos ?? null;
+                $user->id_rol          = $response->id_rol ?? null;
+                $user->id_persona      = $response->id_persona ?? null;
+                $user->id_carrera      = $response->id_carrera ?? null;
+                $user->id_departamento = $response->id_departamento ?? null;
+                $user->activo          = $response->activo ?? true;
+            }
+
             return [
-                'user' => $response,
-                'token' => 'simulated_token_' . $response->id
+                'user'  => $user,
+                'token' => is_object($response) && isset($response->access_token) ? $response->access_token : null
             ];
         } catch (\Exception $e) {
             throw new \Exception('Error de autenticación: ' . $e->getMessage());

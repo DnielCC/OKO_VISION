@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.data.database import Usuario, Persona
-from app.security.auth import get_password_hash, verify_password
+from app.security.auth import obtener_hash_contraseña, verificar_contraseña
 import os
 
 # Usamos el nombre del servicio Docker para conectarse desde el contenedor
@@ -22,7 +22,7 @@ def reset_passwords():
         
         # Establecemos una contraseña fija para pruebas: "123456"
         nueva_contrasena = "123456"
-        u.password = get_password_hash(nueva_contrasena)
+        u.password = obtener_hash_contraseña(nueva_contrasena)
         
         print(f"ID Usuario: {u.id}")
         print(f"Identificador: {u.identificador}")
