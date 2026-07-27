@@ -1,8 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, session, flash, request
+from flask import Blueprint, render_template, redirect, url_for, session, flash, request, jsonify
 from functools import wraps
 import requests
 import os
 import re
+import secrets
+import datetime
+import json as _json
 
 # Creamos el Blueprint llamado 'user_bp'
 user_bp = Blueprint('user', __name__, template_folder='templates')
@@ -251,3 +254,229 @@ def historial():
     user_access = [a for a in all_access if isinstance(a, dict) and a.get('user_id') == user_id]
     
     return render_template('historial.html', user=user_info, accesos=user_access)
+
+
+# =========================================================
+# ENDPOINTS JSON PARA LA APP MOVIL (Flask como API propia)
+# =========================================================
+
+def _to_json(data, default=None):
+    """Intenta extraer JSON de la respuesta de FastAPI, normalizando formato."""
+    try:
+        j = data.json()
+    except Exception:
+        return default if default is not None else []
+    if isinstance(j, list):
+        return j
+    if isinstance(j, dict):
+        if "data" in j and isinstance(j["data"], list):
+            return j["data"]
+        return j
+    return default if default is not None else []
+
+
+def _json_response(data, status=200, headers=None):
+    resp = jsonify(data)
+    resp.status_code = status
+    resp.headers["Cache-Control"] = "no-store"
+    if headers:
+        for k, v in headers.items():
+            resp.headers[k] = v
+    return resp
+
+
+# ---------------- Autenticación ----------------
+
+@user_bp.route('/api/auth/login', methods=['POST'])
+def api_login():
+    """Login devolviendo token de sesión simple + info de usuario."""
+    payload = request.get_json(force=True, silent=True) or {}
+    email = str(payload.get('email', '')).strip()
+    password = str(payload.get('password', ''))
+
+    if not email or not password:
+        return _json_response({"detail": "Correo y contraseña son obligatorios"}, 400)
+
+    try:
+        r = requests.post(f"{API_URL}/auth/login", json={"email": email, "password": password}, timeout=7)
+    except requests.exceptions.Timeout:
+        return _json_response({"detail": "Tiempo de espera agotado con el servidor"}, 504)
+    except Exception as e:
+        return _json_response({"detail": f"Error de conexión: {str(e)}"}, 502)
+
+    if r.status_code != 200:
+        try:
+            d = r.json()
+            msg = d.get("detail", "Credenciales inválidas") if isinstance(d, dict) else "Credenciales inválidas"
+        except Exception:
+            msg = "Credenciales inválidas"
+        return _json_response({"detail": msg}, r.status_code if 400 <= r.status_code < 599 else 401)
+
+    user = r.json() if isinstance(r.json(), dict) else {}
+    uid = user.get('id')
+    if not uid:
+        return _json_response({"detail": "Respuesta inválida del servidor"}, 502)
+
+    # Generar token simple propio de Flask (opcional, app móvil lo almacena)
+    access_token = "oko_" + secrets.token_hex(32)
+
+    resp_user = {
+        "id": uid,
+        "username": user.get('username', ''),
+        "email": user.get('email', ''),
+        "nombre": user.get('nombre', ''),
+        "apellidos": user.get('apellidos', ''),
+        "id_rol": user.get('id_rol'),
+        "id_persona": user.get('id_persona'),
+        "id_carrera": user.get('id_carrera'),
+        "id_departamento": user.get('id_departamento'),
+        "activo": bool(user.get('activo', True)),
+    }
+
+    return _json_response({
+        "access_token": access_token,
+        "token_type": "bearer",
+        **resp_user,
+    })
+
+
+# ---------------- Vehículos ----------------
+
+@user_bp.route('/api/vehiculos/', methods=['GET'])
+def api_vehiculos_list():
+    data = get_api_data("/vehiculos/")
+    return _json_response(data)
+
+
+@user_bp.route('/api/vehiculos/', methods=['POST'])
+def api_vehiculos_create():
+    payload = request.get_json(force=True, silent=True) or {}
+    try:
+        r = requests.post(f"{API_URL}/vehiculos/", json=payload, timeout=7)
+    except requests.exceptions.Timeout:
+        return _json_response({"detail": "Tiempo de espera agotado"}, 504)
+    except Exception as e:
+        return _json_response({"detail": f"Error de conexión: {str(e)}"}, 502)
+    body = _to_json(r, {})
+    status = r.status_code if 200 <= r.status_code < 599 else 502
+    return _json_response(body if isinstance(body, dict) else {"detail": "OK"}, status)
+
+
+@user_bp.route('/api/vehiculos/<int:vid>/', methods=['PATCH', 'PUT'])
+def api_vehiculos_update(vid):
+    payload = request.get_json(force=True, silent=True) or {}
+    try:
+        r = requests.patch(f"{API_URL}/vehiculos/{vid}/", json=payload, timeout=7)
+    except requests.exceptions.Timeout:
+        return _json_response({"detail": "Tiempo de espera agotado"}, 504)
+    except Exception as e:
+        return _json_response({"detail": f"Error de conexión: {str(e)}"}, 502)
+    body = _to_json(r, {})
+    status = r.status_code if 200 <= r.status_code < 599 else 502
+    return _json_response(body if isinstance(body, dict) else {"detail": "OK"}, status)
+
+
+@user_bp.route('/api/vehiculos/<int:vid>/', methods=['DELETE'])
+def api_vehiculos_delete(vid):
+    try:
+        r = requests.delete(f"{API_URL}/vehiculos/{vid}/", timeout=7)
+    except requests.exceptions.Timeout:
+        return _json_response({"detail": "Tiempo de espera agotado"}, 504)
+    except Exception as e:
+        return _json_response({"detail": f"Error de conexión: {str(e)}"}, 502)
+    body = _to_json(r, {})
+    status = r.status_code if 200 <= r.status_code < 599 else 502
+    return _json_response(body if isinstance(body, dict) else {"detail": "Eliminado"}, status)
+
+
+# ---------------- Accesos ----------------
+
+@user_bp.route('/api/accesos/', methods=['GET'])
+def api_accesos_list():
+    data = get_api_data("/accesos/")
+    return _json_response(data)
+
+
+@user_bp.route('/api/accesos/', methods=['POST'])
+def api_accesos_create():
+    payload = request.get_json(force=True, silent=True) or {}
+    # Asegurar campos
+    payload.setdefault("timestamp", datetime.datetime.utcnow().isoformat())
+    payload.setdefault("method", "qr")
+    try:
+        r = requests.post(f"{API_URL}/accesos/", json=payload, timeout=7)
+    except requests.exceptions.Timeout:
+        return _json_response({"detail": "Tiempo de espera agotado"}, 504)
+    except Exception as e:
+        return _json_response({"detail": f"Error de conexión: {str(e)}"}, 502)
+    body = _to_json(r, {})
+    status = r.status_code if 200 <= r.status_code < 599 else 502
+    return _json_response(body if isinstance(body, dict) else payload, status)
+
+
+# ---------------- Alertas ----------------
+
+@user_bp.route('/api/alerts/', methods=['GET'])
+def api_alerts_list():
+    data = get_api_data("/alerts/")
+    return _json_response(data)
+
+
+@user_bp.route('/api/alerts/<int:aid>', methods=['PATCH', 'PUT'])
+@user_bp.route('/api/alerts/<int:aid>/', methods=['PATCH', 'PUT'])
+def api_alerts_update(aid):
+    payload = request.get_json(force=True, silent=True) or {}
+    try:
+        r = requests.patch(f"{API_URL}/alerts/{aid}", json=payload, timeout=7)
+        if r.status_code not in range(200, 300):
+            r2 = requests.patch(f"{API_URL}/alerts/{aid}/", json=payload, timeout=7)
+            if r2.status_code in range(200, 300):
+                r = r2
+    except requests.exceptions.Timeout:
+        return _json_response({"detail": "Tiempo de espera agotado"}, 504)
+    except Exception as e:
+        return _json_response({"detail": f"Error de conexión: {str(e)}"}, 502)
+    body = _to_json(r, {})
+    status = r.status_code if 200 <= r.status_code < 599 else 502
+    return _json_response(body if isinstance(body, dict) else {"detail": "OK"}, status)
+
+
+# ---------------- Usuarios (actualizar password) ----------------
+
+@user_bp.route('/api/usuarios/<int:uid>', methods=['PATCH', 'PUT'])
+@user_bp.route('/api/usuarios/<int:uid>/', methods=['PATCH', 'PUT'])
+def api_usuarios_update(uid):
+    payload = request.get_json(force=True, silent=True) or {}
+    new_password = payload.get("password") or payload.get("new_password")
+
+    if new_password:
+        new_password = str(new_password)
+        if len(new_password) < 8 or len(new_password) > 64:
+            return _json_response({"detail": "La contraseña debe tener entre 8 y 64 caracteres"}, 400)
+        if re.search(r"\s", new_password):
+            return _json_response({"detail": "La contraseña no debe contener espacios"}, 400)
+        if not re.search(r"[A-Za-z]", new_password) or not re.search(r"\d", new_password):
+            return _json_response({"detail": "Debe incluir letras y números"}, 400)
+        comunes = {"12345678","password","password123","qwerty","abc123","11111111","123456789"}
+        if new_password.lower() in comunes:
+            return _json_response({"detail": "La contraseña es demasiado común"}, 400)
+        patch_payload = {"password": new_password}
+    else:
+        patch_payload = {k: v for k, v in payload.items() if k not in ("password", "new_password", "confirm_password")}
+
+    try:
+        r = requests.patch(f"{API_URL}/usuarios/{uid}", json=patch_payload, timeout=7)
+        if r.status_code not in range(200, 300):
+            r2 = requests.patch(f"{API_URL}/usuarios/{uid}/", json=patch_payload, timeout=7)
+            if r2.status_code in range(200, 300):
+                r = r2
+    except requests.exceptions.Timeout:
+        return _json_response({"detail": "Tiempo de espera agotado"}, 504)
+    except Exception as e:
+        return _json_response({"detail": f"Error de conexión: {str(e)}"}, 502)
+
+    if r.status_code == 200:
+        session.pop('pwd_len', None)
+    body = _to_json(r, {})
+    status = r.status_code if 200 <= r.status_code < 599 else 502
+    return _json_response(body if isinstance(body, dict) else {"detail": "Actualizado"}, status)
