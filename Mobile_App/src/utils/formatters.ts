@@ -21,7 +21,7 @@ export const fmtRelative = (d?: string | Date | null) => {
   }
 };
 
-export const fmtNombre = (user?: { nombre?: string; apellidos?: string; username?: string }) => {
+export const fmtNombre = (user?: { nombre?: string; apellidos?: string; username?: string } | null | undefined) => {
   if (!user) return '';
   const full = `${user.nombre || ''} ${user.apellidos || ''}`.trim();
   return full || user.username || 'Usuario';

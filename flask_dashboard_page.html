@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OKO VISION - Dashboard</title>
+    <style>
+        :root {
+            /* Dark theme (default) */
+            --bg-primary: #0A0F1E;
+            --bg-secondary: #141E33;
+            --accent-cyan: #00D2FF;
+            --accent-blue: #0077EE;
+            --text-primary: #D1D9E6;
+            --text-secondary: #8A99AF;
+            --success: #00FF87;
+            --warning: #FFA500;
+            --danger: #FF5252;
+            --glass: rgba(20, 30, 51, 0.75);
+            --border: rgba(0, 210, 255, 0.15);
+            --card-bg: rgba(20, 30, 51, 0.75);
+            --input-bg: rgba(255,255,255,0.05);
+            --hover-bg: rgba(0, 210, 255, 0.08);
+        }
+
+        [data-theme="light"] {
+            /* Light theme mejorado */
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --accent-cyan: #0EA5E9;
+            --accent-blue: #0284C7;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --glass: rgba(255, 255, 255, 0.95);
+            --border: rgba(14, 165, 233, 0.15);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --input-bg: rgba(248, 250, 252, 0.8);
+            --hover-bg: rgba(14, 165, 233, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2.5rem;
+        }
+        
+        .header {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 1.5rem 2.5rem;
+            margin-bottom: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .logo h1 {
+            color: var(--accent-cyan);
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+        }
+        
+        .user-meta {
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .user-details h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .user-details p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .btn-logout {
+            background: rgba(255, 82, 82, 0.08);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            color: var(--danger);
+            padding: 0.7rem 1.4rem;
+            border-radius: 14px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        
+        .btn-logout:hover {
+            background: var(--danger);
+            color: var(--bg-primary);
+            box-shadow: 0 8px 25px rgba(255, 82, 82, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .theme-toggle {
+            background: rgba(0, 210, 255, 0.08);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            color: var(--accent-cyan);
+            padding: 0.7rem;
+            border-radius: 14px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 2.5rem;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(0, 210, 255, 0.4);
+            box-shadow: 0 30px 60px rgba(0, 210, 255, 0.15);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+        
+        .card h2 {
+            color: var(--accent-cyan);
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .profile-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            flex-grow: 1;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.2rem;
+            background: rgba(0, 210, 255, 0.04);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 210, 255, 0.08);
+            transition: all 0.3s;
+        }
+
+        .info-row:hover {
+            background: rgba(0, 210, 255, 0.08);
+            border-color: rgba(0, 210, 255, 0.2);
+        }
+        
+        .info-row label {
+            color: var(--accent-cyan);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-row span {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .qr-section {
+            background: rgba(0, 210, 255, 0.03);
+            border: 2px dashed rgba(0, 210, 255, 0.2);
+            border-radius: 24px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            gap: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .qr-section:hover {
+            background: rgba(0, 210, 255, 0.06);
+            border-color: var(--accent-cyan);
+        }
+        
+        .qr-frame {
+            width: 200px;
+            height: 200px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: var(--bg-primary);
+            padding: 1rem 2.2rem;
+            border-radius: 16px;
+            font-weight: 800;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.9rem;
+            transition: all 0.4s;
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 210, 255, 0.4);
+        }
+        
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            flex-grow: 1;
+        }
+        
+        .item-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 1.2rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1.5rem;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .item-box:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(8px);
+        }
+        
+        .icon-circle {
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-primary);
+            font-size: 1.5rem;
+            box-shadow: 0 8px 15px rgba(0, 210, 255, 0.2);
+        }
+        
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex-grow: 1;
+        }
+
+        .history-item {
+            padding: 1.2rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 5px solid var(--accent-cyan);
+            border-radius: 0 20px 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.01);
+        }
+
+        .history-item.entrada { border-left-color: var(--success); }
+        .history-item.salida { border-left-color: var(--warning); }
+
+        .footer-link {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 2rem;
+        }
+
+        .footer-link a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: gap 0.3s;
+        }
+
+        .footer-link a:hover {
+            gap: 0.8rem;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+        }
+
+        @media (max-width: 1100px) {
+            .main-content { grid-template-columns: 1fr; grid-auto-rows: auto; }
+        }
+
+        @media (max-width: 600px) {
+            .header { flex-direction: column; gap: 1.5rem; text-align: center; }
+            .user-meta { flex-direction: column; gap: 1rem; }
+            .container { padding: 1.2rem; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-eye" style="font-size: 2rem; color: #00F2FF;"></i>
+                <h1>OKO VISION</h1>
+            </div>
+            <div class="user-meta">
+                <div class="user-details">
+                    <h3>Admin Oko</h3>
+                    <p>admin</p>
+                </div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+                    <i class="fas fa-sun" id="theme-icon"></i>
+                </button>
+                <a href="/flask/logout" class="btn-logout">
+                    <i class="fas fa-power-off"></i> Salir
+                </a>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- Mi Perfil -->
+            <div class="card">
+                <h2><i class="fas fa-id-card-alt"></i> Mi Perfil</h2>
+                
+                    
+                        <div style="width:100%; margin-bottom: 1rem;">
+                            
+                                <div style="padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 0.6rem; border: 1px solid var(--border); background: rgba(0, 255, 135, 0.08); color: var(--success);">
+                                    ¡Bienvenido admin!
+                                </div>
+                            
+                        </div>
+                    
+                
+                <div class="profile-list">
+                    <div class="info-row"><label>Nombre</label><span>Admin Oko</span></div>
+                    <div class="info-row"><label>Matrícula</label><span>admin</span></div>
+                    <div class="info-row"><label>Correo</label><span>admin@okovision.com</span></div>
+                    <div class="info-row">
+                        <label>Contraseña</label>
+                        <span>••••••••</span>
+                    </div>
+                    <div class="info-row"><label>Estado</label><span style="color: var(--success);">Activo</span></div>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="openPasswordModal()" class="btn-action" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;">Cambiar Contraseña</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mis Vehículos -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                    <h2><i class="fas fa-car-side"></i> Vehículos</h2>
+                    <a href="/flask/vehiculos" class="btn-action" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;">Gestionar</a>
+                </div>
+                
+                    <div class="list-container">
+                        
+                            <div class="item-box">
+                                <div class="icon-circle"><i class="fas fa-car"></i></div>
+                                <div>
+                                    <h4 style="font-size: 1.1rem; font-weight: 800;">Tesla Model 3</h4>
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem;">Negro</p>
+                                </div>
+                                <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i>
+                            </div>
+                        
+                            <div class="item-box">
+                                <div class="icon-circle"><i class="fas fa-car"></i></div>
+                                <div>
+                                    <h4 style="font-size: 1.1rem; font-weight: 800;">Demo1785544581 Expo1785544581</h4>
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem;">Azul</p>
+                                </div>
+                                <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i>
+                            </div>
+                        
+                    </div>
+                
+            </div>
+
+            <!-- QR de Acceso -->
+            <div class="card">
+                <h2><i class="fas fa-shield-halved"></i> Acceso Seguro</h2>
+                <div class="qr-section">
+                    <div class="qr-frame">
+                        <i class="fas fa-qrcode" style="font-size: 5rem; color: #222; margin-bottom: 0.5rem;"></i>
+                        <p style="color: #444; font-weight: 800; font-size: 0.75rem;">admin</p>
+                    </div>
+                    <a href="/flask/generar-qr" class="btn-action">Obtener Código QR</a>
+                </div>
+            </div>
+
+            <!-- Historial -->
+            <div class="card">
+                <h2><i class="fas fa-clock-rotate-left"></i> Actividad</h2>
+                
+            </div>
+        </div>
+    </div>
+    <div id="passwordModal" class="card" style="position: fixed; inset: 0; margin: auto; width: 92%; max-width: 460px; height: max-content; z-index: 2000; display: none; background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 24px; padding: 2rem;">
+        <h2 style="color: var(--accent-cyan); margin-bottom: 1rem;">Cambiar Contraseña</h2>
+        <form action="/flask/perfil/password" method="POST" onsubmit="return validatePwdForm()">
+            <div style="display:flex; flex-direction:column; gap: 0.8rem;">
+                <label style="color: var(--accent-cyan); font-weight:700; font-size:0.85rem;">Nueva contraseña</label>
+                <input id="new_password" type="password" name="new_password" required minlength="8" maxlength="64" pattern="^(?=.*[A-Za-z])(?=.*\\d)\\S{8,64}$" style="padding: 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text-primary);">
+                <label style="color: var(--accent-cyan); font-weight:700; font-size:0.85rem;">Confirmar contraseña</label>
+                <input id="confirm_password" type="password" name="confirm_password" required minlength="8" maxlength="64" pattern="^(?=.*[A-Za-z])(?=.*\\d)\\S{8,64}$" style="padding: 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text-primary);">
+                <div id="pwd_errors" style="color:#FF5252; font-size:0.85rem; min-height: 1.2em;"></div>
+                <div id="pwd_strength" style="height:8px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow:hidden;">
+                    <div id="pwd_bar" style="height:100%; width:0%; background: linear-gradient(90deg, #ff4d4f, #faad14, #52c41a); transition: width .3s;"></div>
+                </div>
+                <div style="display:flex; gap:0.8rem; margin-top: 1rem;">
+                    <button type="button" onclick="closePasswordModal()" class="btn-logout" style="margin:0;">Cancelar</button>
+                    <button id="pwd_submit" type="submit" class="btn-action" style="margin:0;">Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script>
+        // Theme toggle functionality
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-moon';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeIcon.className = 'fas fa-sun';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (currentTheme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function openPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', initTheme);
+        function scorePassword(p) {
+            var score = 0;
+            if (!p) return 0;
+            var length = Math.min(p.length, 64);
+            score += Math.min(30, length * 3);
+            if (/[A-Z]/.test(p)) score += 15;
+            if (/[a-z]/.test(p)) score += 15;
+            if (/[0-9]/.test(p)) score += 20;
+            if (/[^A-Za-z0-9]/.test(p)) score += 20;
+            if (/\\s/.test(p)) score = 0;
+            return Math.min(score, 100);
+        }
+        function validatePwdForm() {
+            var p1 = document.getElementById('new_password').value;
+            var p2 = document.getElementById('confirm_password').value;
+            var errors = [];
+            if (p1.length < 8 || p1.length > 64) errors.push('Debe tener entre 8 y 64 caracteres');
+            if (/\\s/.test(p1)) errors.push('No debe contener espacios');
+            if (!/[A-Za-z]/.test(p1) || !/[0-9]/.test(p1)) errors.push('Debe incluir letras y números');
+            var comunes = ['12345678','password','password123','qwerty','abc123','11111111','123456789'];
+            if (comunes.indexOf(p1.toLowerCase()) !== -1) errors.push('Es demasiado común');
+            if (p1 !== p2) errors.push('Las contraseñas no coinciden');
+            var errBox = document.getElementById('pwd_errors');
+            errBox.textContent = errors.join(' • ');
+            document.getElementById('pwd_submit').disabled = errors.length > 0;
+            return errors.length === 0;
+        }
+        (function attachPwdListeners(){
+            var np = document.getElementById('new_password');
+            var cp = document.getElementById('confirm_password');
+            var bar = document.getElementById('pwd_bar');
+            if (!np || !cp) return;
+            function update() {
+                var s = scorePassword(np.value);
+                bar.style.width = s + '%';
+                validatePwdForm();
+            }
+            np.addEventListener('input', update);
+            cp.addEventListener('input', update);
+        })();
+    </script>
+</body>
+</html>

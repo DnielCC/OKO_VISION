@@ -1,71 +1,106 @@
-import requests
 import json
+import os
+from typing import Optional
 
-# URL base de la API (en Docker expone el puerto 8002)
-BASE_URL = "http://localhost:8002"
+import requests
+from requests import Response
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-def test_public_endpoint():
-    """Prueba que el endpoint raíz es público"""
-    print("\n=== Prueba de endpoint público (/) ===")
-    response = requests.get(f"{BASE_URL}/")
-    print(f"Status Code: {response.status_code}")
-    print(f"Response: {response.json()}")
-    assert response.status_code == 200, "El endpoint raíz debería ser público"
 
-def test_protected_endpoint_without_token():
-    """Prueba que un endpoint protegido devuelve 401 sin token"""
-    print("\n=== Prueba de endpoint protegido sin token ===")
-    endpoints = ["/usuarios/", "/vehiculos/", "/accesos/", "/personas/"]
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+BASE_URL = os.getenv("OKO_BASE_URL", "https://localhost")
+API_PREFIX = f"{BASE_URL}/api"
+MOBILE_PREFIX = f"{BASE_URL}/mobile-api"
+TEST_EMAIL = os.getenv("OKO_TEST_EMAIL", "admin@okovision.com")
+TEST_PASSWORD = os.getenv("OKO_TEST_PASSWORD", "12345678")
+
+
+def _get(url: str, token: Optional[str] = None) -> Response:
+    headers = {"Authorization": f"Bearer {token}"} if token else None
+    return requests.get(url, headers=headers, timeout=15, verify=False)
+
+
+def _post(url: str, payload: dict, token: Optional[str] = None) -> Response:
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    headers["Content-Type"] = "application/json"
+    return requests.post(url, headers=headers, json=payload, timeout=15, verify=False)
+
+
+def test_public_endpoints():
+    print("\n=== Prueba de endpoints públicos del gateway ===")
+    endpoints = [
+        ("Gateway /health", f"{BASE_URL}/health"),
+        ("FastAPI /api/health", f"{API_PREFIX}/health"),
+    ]
+    for label, url in endpoints:
+        response = _get(url)
+        print(f"{label}: {response.status_code} -> {response.text[:160]}")
+        assert response.status_code == 200, f"{label} debería responder 200"
+
+
+def test_protected_endpoints_without_token():
+    print("\n=== Prueba de endpoints protegidos sin token ===")
+    endpoints = [
+        "/usuarios/",
+        "/vehiculos/",
+        "/accesos/",
+        "/personas/",
+        "/alerts/",
+    ]
     for endpoint in endpoints:
-        response = requests.get(f"{BASE_URL}{endpoint}")
-        print(f"Endpoint {endpoint}: Status Code {response.status_code}")
-        assert response.status_code == 401, f"El endpoint {endpoint} debería requerir autenticación"
+        response = _get(f"{API_PREFIX}{endpoint}")
+        print(f"{endpoint}: {response.status_code}")
+        assert response.status_code in {401, 403}, f"{endpoint} debería requerir autenticación"
+
 
 def test_login_and_access():
-    """Prueba el flujo completo de login y acceso a endpoints protegidos"""
     print("\n=== Prueba de login y acceso con token ===")
-    
-    # Datos de prueba válidos (configurados en la BD)
-    test_email = "ahortamtz@gmail.com"
-    test_password = "123456"
-    
-    # Intento de login
-    login_data = {"email": test_email, "contraseña": test_password}
-    print(f"Intentando login con: {test_email}")
-    login_response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
-    print(f"Login Status Code: {login_response.status_code}")
-    
-    if login_response.status_code == 200:
-        login_result = login_response.json()
-        print(f"Login Response: {json.dumps(login_result, indent=2)}")
-        token = login_result.get("access_token")
-        
-        if token:
-            headers = {"Authorization": f"Bearer {token}"}
-            
-            # Prueba de acceso a endpoints protegidos
-            endpoints = ["/usuarios/", "/vehiculos/", "/accesos/", "/personas/"]
-            for endpoint in endpoints:
-                response = requests.get(f"{BASE_URL}{endpoint}", headers=headers)
-                print(f"Endpoint {endpoint}: Status Code {response.status_code}")
-                assert response.status_code == 200, f"Debería poder acceder a {endpoint} con token válido"
-        else:
-            print("⚠️  No se recibió token en la respuesta de login")
-    else:
-        print(f"⚠️  Login falló. Asegúrate de tener un usuario con email {test_email} y contraseña {test_password} en tu BD.")
-        print(f"Response: {login_response.text}")
+    login_payload = {"email": TEST_EMAIL, "password": TEST_PASSWORD}
+
+    login_response = _post(f"{API_PREFIX}/auth/login", login_payload)
+    print(f"FastAPI login: {login_response.status_code}")
+    assert login_response.status_code == 200, (
+        f"No fue posible iniciar sesión en FastAPI con {TEST_EMAIL}: {login_response.text[:220]}"
+    )
+
+    login_data = login_response.json()
+    token = login_data.get("access_token")
+    assert token, "La respuesta de login no incluyó access_token"
+
+    protected_endpoints = [
+        "/usuarios/",
+        "/vehiculos/",
+        "/accesos/",
+        "/personas/",
+        "/alerts/",
+    ]
+    for endpoint in protected_endpoints:
+        response = _get(f"{API_PREFIX}{endpoint}", token=token)
+        print(f"{endpoint}: {response.status_code}")
+        assert response.status_code == 200, f"Debería poder acceder a {endpoint} con token válido"
+
+    mobile_login = _post(f"{MOBILE_PREFIX}/auth/login", login_payload)
+    print(f"Mobile login: {mobile_login.status_code}")
+    assert mobile_login.status_code == 200, "El login móvil debería responder 200"
+    print(json.dumps(mobile_login.json(), indent=2)[:500])
+
 
 if __name__ == "__main__":
-    print("=== Iniciando pruebas de seguridad de la API ===")
-    
+    print("=== Iniciando pruebas de seguridad de OKO VISION ===")
+    print(f"BASE_URL={BASE_URL}")
+
     try:
-        test_public_endpoint()
-        test_protected_endpoint_without_token()
+        test_public_endpoints()
+        test_protected_endpoints_without_token()
         test_login_and_access()
-        print("\n=== Todas las pruebas completadas ===")
+        print("\n=== Todas las pruebas completadas correctamente ===")
     except requests.exceptions.ConnectionError:
-        print("\n⚠️  Error: No se pudo conectar a la API. Asegúrate de que el servidor esté corriendo en http://localhost:8002")
-    except AssertionError as e:
-        print(f"\n❌ Prueba fallida: {e}")
-    except Exception as e:
-        print(f"\n❌ Error inesperado: {e}")
+        print(
+            "\n⚠️  Error: No se pudo conectar al gateway. "
+            "Asegúrate de tener Docker levantado y el stack disponible en https://localhost"
+        )
+    except AssertionError as exc:
+        print(f"\n❌ Prueba fallida: {exc}")
+    except Exception as exc:
+        print(f"\n❌ Error inesperado: {exc}")

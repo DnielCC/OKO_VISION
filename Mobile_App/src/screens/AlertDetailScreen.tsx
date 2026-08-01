@@ -136,7 +136,6 @@ const AlertDetailScreen: React.FC = () => {
         onDismiss={() => setSnack((s) => ({ ...s, visible: false }))}
         duration={3000}
         style={[styles.snack, snack.ok && { borderLeftWidth: 3, borderLeftColor: OKO_COLORS.success }]}
-        action={{ label: 'OK', onPress={() => setSnack((s) => ({ ...s, visible: false })) }}
       >
         {snack.msg}
       </Snackbar>

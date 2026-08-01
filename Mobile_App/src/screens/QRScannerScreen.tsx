@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Vibration } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Dialog, Portal, Snackbar, IconButton, Chip } from 'react-native-paper';
+import { Button, Dialog, Portal, Snackbar, IconButton, Chip, ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { CameraView, Camera } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { OKO_COLORS } from '../theme';
 import api, { extractErrorMessage } from '../api/client';
 import { AccessLog } from '../types';
@@ -17,13 +17,14 @@ type QrPayload = {
   v?: number;
   ts?: number;
   plate?: string;
+  sig?: string;
   [k: string]: unknown;
 };
 
 const QRScannerScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [payload, setPayload] = useState<QrPayload | null>(null);
   const [rawText, setRawText] = useState<string>('');
@@ -31,12 +32,6 @@ const QRScannerScreen: React.FC = () => {
   const [result, setResult] = useState<{ ok: boolean; msg: string; access?: AccessLog } | null>(null);
   const [snack, setSnack] = useState<{ visible: boolean; msg: string }>({ visible: false, msg: '' });
   const qrLockRef = useRef(false);
-
-  useEffect(() => {
-    if (permission && !permission.granted) {
-      requestPermission();
-    }
-  }, [permission, requestPermission]);
 
   const resetScan = () => {
     qrLockRef.current = false;
@@ -102,7 +97,8 @@ const QRScannerScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <Text style={{ color: OKO_COLORS.textSecondary }}>Solicitando permisos de cámara...</Text>
+          <ActivityIndicator animating size="large" color={OKO_COLORS.accentCyan} />
+          <Text style={{ color: OKO_COLORS.textSecondary, marginTop: 12 }}>Solicitando permisos de cámara...</Text>
         </View>
       </SafeAreaView>
     );
@@ -121,7 +117,7 @@ const QRScannerScreen: React.FC = () => {
             buttonColor={OKO_COLORS.accentCyan}
             textColor="#041019"
             style={{ marginTop: 18, borderRadius: 14 }}
-            onPress={requestPermission}
+            onPress={() => requestPermission()}
           >
             Conceder permiso
           </Button>
@@ -236,7 +232,6 @@ const QRScannerScreen: React.FC = () => {
         onDismiss={() => setSnack((s) => ({ ...s, visible: false }))}
         duration={3000}
         style={styles.snack}
-        action={{ label: 'OK', onPress={() => setSnack((s) => ({ ...s, visible: false })) }}
       >
         {snack.msg}
       </Snackbar>

@@ -15,13 +15,17 @@ import { useAuth } from '../context/AuthContext';
 import FormInput from '../components/FormInput';
 import GlassCard from '../components/GlassCard';
 import Loading from '../components/Loading';
+import { DEMO_MODE_ENABLED } from '../api/client';
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { login, biometryEnabled, setBiometryEnabled } = useAuth();
   const { control, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<LoginSchemaType>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: {
+      email: DEMO_MODE_ENABLED ? 'admin@okovision.com' : '',
+      password: DEMO_MODE_ENABLED ? '12345678' : '',
+    },
   });
   const [secure, setSecure] = useState(true);
   const [rememberBio, setRememberBio] = useState(false);
@@ -169,7 +173,9 @@ const LoginScreen: React.FC = () => {
               )}
 
               <Text style={styles.hint}>
-                Admin demo: admin@okovision.com / 12345678
+                {DEMO_MODE_ENABLED
+                  ? 'Modo demo activo: admin@okovision.com / 12345678'
+                  : 'Admin demo: admin@okovision.com / 12345678'}
               </Text>
             </GlassCard>
           </ScrollView>
@@ -179,10 +185,6 @@ const LoginScreen: React.FC = () => {
           onDismiss={() => setSnack((s) => ({ ...s, visible: false }))}
           duration={3500}
           style={styles.snack}
-          action={{
-            label: 'OK',
-            onPress: () => setSnack((s) => ({ ...s, visible: false })),
-          }}
         >
           {snack.msg}
         </Snackbar>

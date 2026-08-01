@@ -1,5 +1,5 @@
 services:
-  # Base de Datos PostgreSQL
+  # Base de Datos PostgreSQL - RED PRIVADA
   postgres_db:
     image: postgres:16-alpine
     container_name: oko_vision_db
@@ -8,8 +8,6 @@ services:
       - POSTGRES_USER=oko_admin
       - POSTGRES_PASSWORD=oko_password
       - POSTGRES_DB=oko_vision
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db_init:/docker-entrypoint-initdb.d
@@ -19,51 +17,132 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - oko_network
+      - oko_private
 
-  # API Backend (FastAPI)
+  # API Backend (FastAPI) - PRIVADO (accede vía Nginx)
   api_backend:
     build:
       context: ./API_Backend
       dockerfile: Dockerfile
+    image: oko_api:latest
     container_name: oko_vision_api
     restart: unless-stopped
-    ports:
-      - "8002:8000"
+    expose:
+      - "8000"
     environment:
       - DATABASE_URL=postgresql://oko_admin:oko_password@postgres_db:5432/oko_vision
+      - SECRET_KEY=oko-production-secret-key-2026-change-me-please
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
     volumes:
       - ./API_Backend:/app
     depends_on:
       postgres_db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health', timeout=5); sys.exit(0)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
     networks:
-      - oko_network
+      - oko_private
+      - oko_internal
 
-  # Aplicación Flask (Usuario)
+  # API Backend réplica para Load Balancer (REUTILIZA la imagen ya compilada)
+  api_backend_2:
+    image: oko_api:latest
+    container_name: oko_vision_api_2
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      - DATABASE_URL=postgresql://oko_admin:oko_password@postgres_db:5432/oko_vision
+      - SECRET_KEY=oko-production-secret-key-2026-change-me-please
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+    volumes:
+      - ./API_Backend:/app
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      api_backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health', timeout=5); sys.exit(0)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - oko_private
+      - oko_internal
+
+  # Aplicación Flask (Usuario) - PRIVADO (accede vía Nginx)
   flask_user:
     build:
       context: ./Flask_User
       dockerfile: Dockerfile
+    image: oko_flask:latest
     container_name: oko_vision_flask
     restart: unless-stopped
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
       - API_URL=http://api_backend:8000
+      - JWT_SECRET_KEY=oko-production-secret-key-2026-change-me-please
     volumes:
       - ./Flask_User:/app
+    depends_on:
+      api_backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:5000/health', timeout=5); sys.exit(0)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
     networks:
-      - oko_network
+      - oko_private
+      - oko_internal
 
-  # Aplicación Laravel (Administrador)
+  # Flask réplica para Load Balancer (REUTILIZA la imagen ya compilada)
+  flask_user_2:
+    image: oko_flask:latest
+    container_name: oko_vision_flask_2
+    restart: unless-stopped
+    expose:
+      - "5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - API_URL=http://api_backend:8000
+      - JWT_SECRET_KEY=oko-production-secret-key-2026-change-me-please
+    volumes:
+      - ./Flask_User:/app
+    depends_on:
+      api_backend:
+        condition: service_started
+      flask_user:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:5000/health', timeout=5); sys.exit(0)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - oko_private
+      - oko_internal
+
+  # Aplicación Laravel (Administrador) - PRIVADO (accede vía Nginx)
   laravel_admin:
     build: ./Laravel_Admin
     container_name: oko_vision_laravel
-    ports:
-      - "8001:80"
+    expose:
+      - "80"
     environment:
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres_db
@@ -72,9 +151,10 @@ services:
       - DB_USERNAME=oko_admin
       - DB_PASSWORD=oko_password
       - API_URL=http://api_backend:8000
-      - APP_DEBUG=true
+      - APP_DEBUG=false
       - SESSION_DRIVER=cookie
       - APP_KEY=base64:FaBcBKAnX5hFuBM1O4B67bVHVTQRZr/iLem9jkeFG5U=
+      - APP_URL=https://localhost
     volumes:
       - ./Laravel_Admin/app:/var/www/html/app
       - ./Laravel_Admin/config:/var/www/html/config
@@ -88,13 +168,123 @@ services:
       api_backend:
         condition: service_started
     networks:
-      - oko_network
+      - oko_private
+      - oko_internal
 
+  # =====================================================
+  # NGNIX - SERVIDOR PÚBLICO con SSL + Balanceo + Firewall
+  # =====================================================
+  nginx_gateway:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    image: oko_nginx:latest
+    container_name: oko_vision_gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # SSL: montaje lectura/escritura (entrypoint genera los certs aqui si faltan)
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      api_backend:
+        condition: service_healthy
+      api_backend_2:
+        condition: service_healthy
+      flask_user:
+        condition: service_healthy
+      flask_user_2:
+        condition: service_healthy
+      laravel_admin:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-U", "OKO-Healthcheck", "-qO-", "https://localhost/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 25s
+    networks:
+      - oko_public
+      - oko_internal
 
+  # ================
+  # MONITOREO
+  # ================
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: oko_vision_prometheus
+    restart: unless-stopped
+    expose:
+      - "9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - oko_internal
 
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: oko_vision_grafana
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=OkoVision2026!
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://localhost/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - oko_internal
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.2
+    container_name: oko_vision_node_exporter
+    restart: unless-stopped
+    expose:
+      - "9100"
+    networks:
+      - oko_internal
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: oko_vision_cadvisor
+    restart: unless-stopped
+    expose:
+      - "8080"
+    volumes:
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - oko_internal
+
+# Redes: pública (solo Nginx) y privada (solo servicios)
 networks:
-  oko_network:
+  oko_public:
+    name: oko_public
     driver: bridge
+  oko_internal:
+    name: oko_internal
+    driver: bridge
+  oko_private:
+    name: oko_private
+    driver: bridge
+    internal: true  # Sin acceso a internet, solo entre servicios
 
 volumes:
   postgres_data:
+  nginx_logs:
+  prometheus_data:
+  grafana_data:

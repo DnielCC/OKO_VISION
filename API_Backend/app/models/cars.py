@@ -4,12 +4,23 @@ from datetime import datetime
 import re
 
 class VehiculoBase(BaseModel):
+    plate: Optional[str] = Field(None, min_length=3, max_length=15)
     marca: str = Field(..., min_length=2)
     modelo: str = Field(..., min_length=1)
     anio: Optional[int] = Field(None, ge=1900, le=2100)
     color: Optional[str] = None
     tipo: str = Field(..., pattern="^(auto|moto|camioneta|otro)$")
     
+    @field_validator("plate")
+    @classmethod
+    def validar_plate(cls, v: Optional[str]):
+        if v is None or v.strip() == "":
+            return None
+        v = v.strip().upper()
+        if not re.fullmatch(r"[A-Z0-9\-]{3,15}", v):
+            raise ValueError("Placa inválida")
+        return v
+
     @field_validator("marca")
     @classmethod
     def validar_marca(cls, v: str):
@@ -55,12 +66,23 @@ class VehiculoCreate(VehiculoBase):
     owner_id: int
 
 class VehiculoUpdate(BaseModel):
+    plate: Optional[str] = None
     marca: Optional[str] = None
     modelo: Optional[str] = None
     anio: Optional[int] = None
     color: Optional[str] = None
     tipo: Optional[str] = None
     
+    @field_validator("plate")
+    @classmethod
+    def v_plate(cls, v: Optional[str]):
+        if v is None or v.strip() == "":
+            return None
+        v = v.strip().upper()
+        if not re.fullmatch(r"[A-Z0-9\-]{3,15}", v):
+            raise ValueError("Placa inválida")
+        return v
+
     @field_validator("marca")
     @classmethod
     def v_marca(cls, v: Optional[str]):

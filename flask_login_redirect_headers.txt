@@ -1,0 +1,21 @@
+HTTP/1.1 302 FOUND
+Server: nginx
+Date: Sat, 01 Aug 2026 06:38:46 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 219
+Connection: keep-alive
+Location: /flask/dashboard
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Referrer-Policy: strict-origin-when-cross-origin
+Vary: Cookie
+Set-Cookie: session=.eJw1j91Og0AQhV-lzjUhlFQTuZLWxCymRRva-teQ7TKGEXYXWaCWpu_uYuRmJnPynck5Z0g_S25yNBC8n2HS2AWmFQKNAQc-Ws_j0zmh6lBRpic8k6SuYH_ZO5BWWEuuUFlTU7foAK8obXSBCgLAU5QfHgTFFLFNz6YrYoap9bVYsBtWVC_bRXTrWqjPdsxC7LQcALmdDcAyEbNVsvHjpDitlOced8cnIWf3C-2FufgJv7f41c-7V3p7XqdexHjchFQ_VtZpU7cG65RXWJY2si0GcaFHGSWn0kp_Re50oTsypJUrtBwRyiDw_f9DaXmo0RrCwTAiw1Bc4vgILr_5QnA8.am2Udg.fXLV6L8HCd4bHVWJjO3UF_VEnT4; Expires=Tue, 01 Sep 2026 06:38:46 GMT; Secure; HttpOnly; Path=/; SameSite=Lax
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=3600
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: default-src 'self' http: https: data: blob: 'unsafe-inline' 'unsafe-eval'
+

@@ -209,7 +209,6 @@ const HomeScreen: React.FC = () => {
         onDismiss={() => setSnack((s) => ({ ...s, visible: false }))}
         duration={3200}
         style={styles.snack}
-        action={{ label: 'OK', onPress: () => setSnack((s) => ({ ...s, visible: false })) }}
       >
         {snack.msg}
       </Snackbar>

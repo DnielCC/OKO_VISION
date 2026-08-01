@@ -139,7 +139,6 @@ const VehiclesScreen: React.FC = () => {
         onDismiss={() => setSnack((s) => ({ ...s, visible: false }))}
         duration={3000}
         style={styles.snack}
-        action={{ label: 'OK', onPress: () => setSnack((s) => ({ ...s, visible: false })) }}
       >
         {snack.msg}
       </Snackbar>

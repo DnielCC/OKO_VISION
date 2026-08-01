@@ -1,5 +1,5 @@
 import { DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
-import { MD3DarkTheme, configureFonts } from 'react-native-paper';
+import { MD3DarkTheme } from 'react-native-paper';
 
 export const OKO_COLORS = {
   bgPrimary: '#050A18',
@@ -22,10 +22,6 @@ export const OKO_COLORS = {
   low: '#60A5FA',
 } as const;
 
-const fontConfig = {
-  fontFamily: 'System',
-};
-
 export const PaperTheme = {
   ...MD3DarkTheme,
   dark: true,
@@ -45,7 +41,7 @@ export const PaperTheme = {
     onSurfaceVariant: OKO_COLORS.textSecondary,
     outline: OKO_COLORS.border,
   },
-  fonts: configureFonts({ config: fontConfig }),
+  fonts: MD3DarkTheme.fonts,
   roundness: 14,
 };
 

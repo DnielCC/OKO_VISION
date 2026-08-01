@@ -13,3 +13,6 @@ opencv-python>=4.10.0
 numpy>=2.0.0
 pillow>=10.4.0
 ultralytics>=8.3.0
+prometheus-client>=0.20.0
+slowapi>=0.1.9
+limits>=3.13.0

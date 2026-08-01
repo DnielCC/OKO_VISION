@@ -1,0 +1,392 @@
+# ============================================================
+# OKO VISION - DOCKER-COMPOSE PRODUCCIÓN / NUBE
+# ============================================================
+# Optimizado para AWS EC2 / GCP Compute / Azure VM / DigitalOcean / VPS
+#
+# INSTRUCCIONES DE DESPLIEGUE EN NUBE:
+# 1. Subir todo el proyecto a la instancia (git clone o scp/rsync)
+# 2. Exponer puertos 80 y 443 en el Security Group / Firewall del proveedor
+# 3. (Opcional) Configurar dominio y actualizar server_name en docker/nginx/conf.d/default.conf
+# 4. Ejecutar:  docker compose -f docker-compose.prod.yml up -d --build
+# 5. Monitoreo: https://<IP>/grafana   (admin / OkoVision2026!)
+#    Documentación API: https://<IP>/docs
+#    Admin Web:        https://<IP>/
+#    Portal Usuario:   https://<IP>/flask/
+#    Mobile Gateway:   https://<IP>/mobile-api/ (para la app móvil)
+# ============================================================
+
+x-common-restart: &restart-policy
+  restart: always
+
+x-health-defaults: &health-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+
+services:
+  # =====================================================
+  # POSTGRESQL (RED PRIVADA - SIN ACCESO EXTERNO)
+  # =====================================================
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: oko_prod_db
+    <<: *restart-policy
+    environment:
+      POSTGRES_USER: ${DB_USER:-oko_admin}
+      POSTGRES_PASSWORD: ${DB_PASS:-oko_password_cloud_2026_$$ecure!}
+      POSTGRES_DB: ${DB_NAME:-oko_vision}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-oko_admin} -d ${DB_NAME:-oko_vision}"]
+      <<: *health-defaults
+    networks:
+      - oko_private
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # =====================================================
+  # FASTAPI (2 réplicas - Balanceadas Nginx least_conn)
+  # =====================================================
+  api_backend:
+    build:
+      context: ./API_Backend
+      dockerfile: Dockerfile
+    image: oko_api:latest
+    container_name: oko_prod_api_1
+    <<: *restart-policy
+    expose:
+      - "8000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-oko_admin}:${DB_PASS:-oko_password_cloud_2026_$$ecure!}@postgres_db:5432/${DB_NAME:-oko_vision}
+      SECRET_KEY: ${JWT_SECRET:-oko-production-super-secret-key-change-this-please-2026-xx}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      ENV: production
+    volumes:
+      - ./API_Backend:/app:ro
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:8000/health || exit 1"]
+      <<: *health-defaults
+    networks:
+      - oko_private
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+
+  api_backend_2:
+    image: oko_api:latest
+    container_name: oko_prod_api_2
+    <<: *restart-policy
+    expose:
+      - "8000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-oko_admin}:${DB_PASS:-oko_password_cloud_2026_$$ecure!}@postgres_db:5432/${DB_NAME:-oko_vision}
+      SECRET_KEY: ${JWT_SECRET:-oko-production-super-secret-key-change-this-please-2026-xx}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      ENV: production
+    volumes:
+      - ./API_Backend:/app:ro
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      api_backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:8000/health || exit 1"]
+      <<: *health-defaults
+    networks:
+      - oko_private
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+
+  # =====================================================
+  # FLASK USER PORTAL (2 réplicas - Balanceadas)
+  # =====================================================
+  flask_user:
+    build:
+      context: ./Flask_User
+      dockerfile: Dockerfile
+    image: oko_flask:latest
+    container_name: oko_prod_flask_1
+    <<: *restart-policy
+    expose:
+      - "5000"
+    environment:
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
+      API_URL: http://api_backend:8000
+      JWT_SECRET_KEY: ${JWT_SECRET:-oko-production-super-secret-key-change-this-please-2026-xx}
+      SECRET_KEY: ${FLASK_SECRET:-oko-flask-session-secret-2026-change-me!}
+    volumes:
+      - ./Flask_User:/app:ro
+    depends_on:
+      api_backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:5000/health || exit 1"]
+      <<: *health-defaults
+    networks:
+      - oko_private
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+
+  flask_user_2:
+    image: oko_flask:latest
+    container_name: oko_prod_flask_2
+    <<: *restart-policy
+    expose:
+      - "5000"
+    environment:
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
+      API_URL: http://api_backend:8000
+      JWT_SECRET_KEY: ${JWT_SECRET:-oko-production-super-secret-key-change-this-please-2026-xx}
+      SECRET_KEY: ${FLASK_SECRET:-oko-flask-session-secret-2026-change-me!}
+    volumes:
+      - ./Flask_User:/app:ro
+    depends_on:
+      api_backend:
+        condition: service_healthy
+      flask_user:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:5000/health || exit 1"]
+      <<: *health-defaults
+    networks:
+      - oko_private
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+
+  # =====================================================
+  # LARAVEL ADMIN
+  # =====================================================
+  laravel_admin:
+    build: ./Laravel_Admin
+    container_name: oko_prod_laravel
+    <<: *restart-policy
+    expose:
+      - "80"
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_NAME:-oko_vision}
+      DB_USERNAME: ${DB_USER:-oko_admin}
+      DB_PASSWORD: ${DB_PASS:-oko_password_cloud_2026_$$ecure!}
+      API_URL: http://api_backend:8000
+      APP_DEBUG: "false"
+      APP_ENV: production
+      SESSION_DRIVER: cookie
+      APP_KEY: ${LARAVEL_APP_KEY:-base64:FaBcBKAnX5hFuBM1O4B67bVHVTQRZr/iLem9jkeFG5U=}
+      APP_URL: ${APP_URL:-https://localhost}
+    volumes:
+      - laravel_storage:/var/www/html/storage
+      - laravel_bootstrap_cache:/var/www/html/bootstrap/cache
+      - ./Laravel_Admin/app:/var/www/html/app:ro
+      - ./Laravel_Admin/config:/var/www/html/config:ro
+      - ./Laravel_Admin/resources:/var/www/html/resources:ro
+      - ./Laravel_Admin/routes:/var/www/html/routes:ro
+      - ./Laravel_Admin/public:/var/www/html/public:ro
+      - ./Laravel_Admin/database:/var/www/html/database:ro
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      api_backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:80/ > /dev/null || exit 1"]
+      <<: *health-defaults
+    networks:
+      - oko_private
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+          cpus: '1.0'
+
+  # =====================================================
+  # NGINX GATEWAY (PÚBLICO - SOLO ÉSTE TIENE PUERTOS ABIERTOS)
+  # =====================================================
+  nginx_gateway:
+    image: nginx:1.27-alpine
+    container_name: oko_prod_gateway
+    <<: *restart-policy
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+      - ./docker/nginx/entrypoint.sh:/entrypoint.sh:ro
+      - nginx_prod_logs:/var/log/nginx
+    depends_on:
+      api_backend:
+        condition: service_healthy
+      api_backend_2:
+        condition: service_healthy
+      flask_user:
+        condition: service_healthy
+      flask_user_2:
+        condition: service_healthy
+      laravel_admin:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      <<: *health-defaults
+    networks:
+      - oko_public
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # =====================================================
+  # MONITOREO - PROMETHEUS (SOLO INTERNO)
+  # =====================================================
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: oko_prod_prometheus
+    <<: *restart-policy
+    expose:
+      - "9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_prod_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      <<: *health-defaults
+    networks:
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+
+  # =====================================================
+  # MONITOREO - GRAFANA (Accesible vía /grafana en Nginx)
+  # =====================================================
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: oko_prod_grafana
+    <<: *restart-policy
+    expose:
+      - "3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASS:-OkoVision2026!}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_INSTALL_PLUGINS: "grafana-piechart-panel,grafana-clock-panel"
+    volumes:
+      - grafana_prod_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      <<: *health-defaults
+    networks:
+      - oko_internal
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.2
+    container_name: oko_prod_node_exporter
+    <<: *restart-policy
+    expose:
+      - "9100"
+    command:
+      - '--path.rootfs=/host'
+    volumes:
+      - '/:/host:ro,rslave'
+    networks:
+      - oko_internal
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: oko_prod_cadvisor
+    <<: *restart-policy
+    expose:
+      - "8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - oko_internal
+
+# ============================================================
+# REDES:
+#   - oko_public   : solo Nginx (acceso a internet).
+#   - oko_internal : servicios + Nginx (comunicación interna).
+#   - oko_private  : Postgres + apps que acceden a DB (sin internet).
+# ============================================================
+networks:
+  oko_public:
+    name: oko_prod_public
+    driver: bridge
+  oko_internal:
+    name: oko_prod_internal
+    driver: bridge
+  oko_private:
+    name: oko_prod_private
+    driver: bridge
+    internal: true
+
+# Volúmenes persistentes (esencial para no perder datos en reinicios)
+volumes:
+  postgres_prod_data:
+    name: oko_prod_postgres
+  nginx_prod_logs:
+    name: oko_prod_nginx_logs
+  prometheus_prod_data:
+    name: oko_prod_prometheus
+  grafana_prod_data:
+    name: oko_prod_grafana
+  laravel_storage:
+    name: oko_prod_laravel_storage
+  laravel_bootstrap_cache:
+    name: oko_prod_laravel_bootstrap
