@@ -40,7 +40,7 @@ export const changePasswordSchema = z.object({
 
 export type ChangePasswordSchemaType = z.infer<typeof changePasswordSchema>;
 
-const validTipos = ['auto', 'moto', 'bicicleta', 'camioneta', 'otro'] as const;
+const validTipos = ['auto', 'moto', 'camioneta', 'otro'] as const;
 
 export const vehicleSchema = z.object({
   plate: z

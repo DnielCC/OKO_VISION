@@ -144,6 +144,19 @@ def _session_auth_headers() -> dict:
     return {"Authorization": f"Bearer {token}"} if token else {}
 
 
+def _request_auth_headers() -> dict:
+    auth = (request.headers.get("Authorization") or "").strip()
+    return {"Authorization": auth} if auth else {}
+
+
+def _request_bearer_token() -> str | None:
+    auth = (request.headers.get("Authorization") or "").strip()
+    if auth.lower().startswith("bearer "):
+        token = auth.split(None, 1)[1].strip()
+        return token or None
+    return None
+
+
 # ============================================================
 # DECORADORES: login_required (WEB) y jwt_required (API)
 # ============================================================
@@ -557,7 +570,7 @@ def api_auth_logout():
 @user_bp.route('/api/vehiculos/', methods=['GET'])
 @jwt_required
 def api_vehiculos_list():
-    data = get_api_data("/vehiculos/")
+    data = get_api_data("/vehiculos/", _request_bearer_token())
     return _json_response(data)
 
 
@@ -579,7 +592,12 @@ def api_vehiculos_create():
         payload['owner_id'] = int(getattr(g, 'jwt_user', {}).get('sub') or 0)
 
     try:
-        r = requests.post(f"{API_URL}/vehiculos/", json=payload, timeout=7)
+        r = requests.post(
+            f"{API_URL}/vehiculos/",
+            json=payload,
+            timeout=7,
+            headers=_request_auth_headers(),
+        )
     except requests.exceptions.Timeout:
         return _json_response({"detail": "Tiempo de espera agotado"}, 504)
     except Exception as e:
@@ -596,9 +614,19 @@ def api_vehiculos_update(vid):
     if 'marca' in payload and (len(str(payload['marca']).strip()) < 2):
         return _json_response({"detail": "Marca muy corta"}, 400)
     try:
-        r = requests.patch(f"{API_URL}/vehiculos/{vid}/", json=payload, timeout=7)
+        r = requests.patch(
+            f"{API_URL}/vehiculos/{vid}/",
+            json=payload,
+            timeout=7,
+            headers=_request_auth_headers(),
+        )
         if r.status_code not in range(200, 300):
-            r2 = requests.patch(f"{API_URL}/vehiculos/{vid}", json=payload, timeout=7)
+            r2 = requests.patch(
+                f"{API_URL}/vehiculos/{vid}",
+                json=payload,
+                timeout=7,
+                headers=_request_auth_headers(),
+            )
             if r2.status_code in range(200, 300):
                 r = r2
     except requests.exceptions.Timeout:
@@ -614,9 +642,17 @@ def api_vehiculos_update(vid):
 @jwt_required
 def api_vehiculos_delete(vid):
     try:
-        r = requests.delete(f"{API_URL}/vehiculos/{vid}/", timeout=7)
+        r = requests.delete(
+            f"{API_URL}/vehiculos/{vid}/",
+            timeout=7,
+            headers=_request_auth_headers(),
+        )
         if r.status_code not in range(200, 300):
-            r2 = requests.delete(f"{API_URL}/vehiculos/{vid}", timeout=7)
+            r2 = requests.delete(
+                f"{API_URL}/vehiculos/{vid}",
+                timeout=7,
+                headers=_request_auth_headers(),
+            )
             if r2.status_code in range(200, 300):
                 r = r2
     except requests.exceptions.Timeout:
@@ -632,7 +668,7 @@ def api_vehiculos_delete(vid):
 @user_bp.route('/api/accesos/', methods=['GET'])
 @jwt_required
 def api_accesos_list():
-    data = get_api_data("/accesos/")
+    data = get_api_data("/accesos/", _request_bearer_token())
     return _json_response(data)
 
 
@@ -649,7 +685,12 @@ def api_accesos_create():
         return _json_response({"detail": "No puedes registrar accesos para otro usuario"}, 403)
 
     try:
-        r = requests.post(f"{API_URL}/accesos/", json=payload, timeout=7)
+        r = requests.post(
+            f"{API_URL}/accesos/",
+            json=payload,
+            timeout=7,
+            headers=_request_auth_headers(),
+        )
     except requests.exceptions.Timeout:
         return _json_response({"detail": "Tiempo de espera agotado"}, 504)
     except Exception as e:
@@ -663,7 +704,7 @@ def api_accesos_create():
 @user_bp.route('/api/alerts/', methods=['GET'])
 @jwt_required
 def api_alerts_list():
-    data = get_api_data("/alerts/")
+    data = get_api_data("/alerts/", _request_bearer_token())
     return _json_response(data)
 
 
@@ -673,9 +714,19 @@ def api_alerts_list():
 def api_alerts_update(aid):
     payload = request.get_json(force=True, silent=True) or {}
     try:
-        r = requests.patch(f"{API_URL}/alerts/{aid}", json=payload, timeout=7)
+        r = requests.patch(
+            f"{API_URL}/alerts/{aid}",
+            json=payload,
+            timeout=7,
+            headers=_request_auth_headers(),
+        )
         if r.status_code not in range(200, 300):
-            r2 = requests.patch(f"{API_URL}/alerts/{aid}/", json=payload, timeout=7)
+            r2 = requests.patch(
+                f"{API_URL}/alerts/{aid}/",
+                json=payload,
+                timeout=7,
+                headers=_request_auth_headers(),
+            )
             if r2.status_code in range(200, 300):
                 r = r2
     except requests.exceptions.Timeout:
@@ -711,9 +762,19 @@ def api_usuarios_update(uid):
         patch_payload = {k: v for k, v in payload.items() if k not in ("password", "new_password", "confirm_password", "id", "id_rol")}
 
     try:
-        r = requests.patch(f"{API_URL}/usuarios/{uid}", json=patch_payload, timeout=7)
+        r = requests.patch(
+            f"{API_URL}/usuarios/{uid}",
+            json=patch_payload,
+            timeout=7,
+            headers=_request_auth_headers(),
+        )
         if r.status_code not in range(200, 300):
-            r2 = requests.patch(f"{API_URL}/usuarios/{uid}/", json=patch_payload, timeout=7)
+            r2 = requests.patch(
+                f"{API_URL}/usuarios/{uid}/",
+                json=patch_payload,
+                timeout=7,
+                headers=_request_auth_headers(),
+            )
             if r2.status_code in range(200, 300):
                 r = r2
     except requests.exceptions.Timeout:

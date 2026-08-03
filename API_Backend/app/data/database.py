@@ -198,12 +198,12 @@ class LaravelVehicle(Base):
     brand = Column(String(255), nullable=False)
     model = Column(String(255), nullable=False)
     color = Column(String(255), nullable=False)
-    owner_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    owner_id = Column(BigInteger, ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
 
 class LaravelAccessLog(Base):
     __tablename__ = 'access_logs'
     id = Column(BigInteger, primary_key=True, index=True)
-    user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user_id = Column(BigInteger, ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
     vehicle_plate = Column(String(255), nullable=False)
     access_time = Column(DateTime, nullable=False)
     access_type = Column(String(255), nullable=False)

@@ -16,7 +16,7 @@ import { RootStackParamList, Vehicle } from '../types';
 
 type R = RouteProp<RootStackParamList, 'VehicleForm'>;
 
-const TIPOS = ['auto', 'moto', 'bicicleta', 'camioneta', 'otro'];
+const TIPOS = ['auto', 'moto', 'camioneta', 'otro'];
 
 const VehicleFormScreen: React.FC = () => {
   const navigation = useNavigation<any>();
