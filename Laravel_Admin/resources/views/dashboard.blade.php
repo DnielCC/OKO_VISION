@@ -255,7 +255,7 @@ setInterval(updateTimestamp, 1000);
 let dashboardState = {
     accesosHoy: {{ $accesos_hoy }},
     alertasActivas: {{ $alertas_activas }},
-    detectedPlates: new Set() // To avoid duplicate detections
+    recentDetections: new Map()
 };
 
 // Webcam and YOLO integration
@@ -265,13 +265,29 @@ let ctx = canvas ? canvas.getContext('2d') : null;
 let detectionOverlay = document.getElementById('detectionOverlay');
 let isProcessing = false;
 let apiToken = @json($api_token); // Get token from Laravel
-const API_URL = 'http://localhost:8002'; // API backend URL
+const API_URL = `${window.location.origin}/api`;
+const faceDetector = (() => {
+    try {
+        if ('FaceDetector' in window) {
+            return new FaceDetector({ fastMode: true, maxDetectedFaces: 5 });
+        }
+    } catch (err) {
+        console.warn('FaceDetector no disponible:', err);
+    }
+    return null;
+})();
 
 // Initialize webcam
 async function initWebcam() {
     if (!video) return;
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        });
         video.srcObject = stream;
         video.onloadedmetadata = () => {
             canvas.width = video.videoWidth;
@@ -283,85 +299,64 @@ async function initWebcam() {
     }
 }
 
-// Generate a random plate for simulation
-function generateRandomPlate() {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numbers = '0123456789';
-    let plate = '';
-    for (let i = 0; i < 3; i++) {
-        plate += letters.charAt(Math.floor(Math.random() * letters.length));
+function getDetectionMeta(label) {
+    const normalized = String(label || 'objeto').toLowerCase();
+    if (['person', 'persona'].includes(normalized)) {
+        return {
+            title: 'Persona detectada',
+            description: 'Persona detectada por el monitor de acceso',
+            color: 'cyan',
+            icon: 'user',
+        };
     }
-    plate += '-';
-    for (let i = 0; i < 3; i++) {
-        plate += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    if (['car', 'truck', 'bus', 'motorcycle', 'bicycle', 'vehicle', 'vehiculo', 'vehículo'].includes(normalized)) {
+        return {
+            title: 'Vehículo detectado',
+            description: 'Vehículo detectado por el monitor de acceso',
+            color: 'green',
+            icon: 'car',
+        };
     }
-    return plate;
+    return {
+        title: 'Objeto detectado',
+        description: `Objeto detectado: ${label}`,
+        color: 'yellow',
+        icon: 'camera',
+    };
 }
 
-// Update dashboard with new access
-function updateDashboardWithAccess(plate, isAuthorized, label) {
-    // Update "Accesos Hoy" count
-    dashboardState.accesosHoy++;
-    const accesosHoyEl = document.getElementById('accesos-hoy');
-    if (accesosHoyEl) {
-        accesosHoyEl.textContent = dashboardState.accesosHoy;
-    }
+function buildDetectionKey(detection, label) {
+    const x1 = Math.round((detection.coordenadas?.x1 || 0) / 80);
+    const y1 = Math.round((detection.coordenadas?.y1 || 0) / 80);
+    const x2 = Math.round((detection.coordenadas?.x2 || 0) / 80);
+    const y2 = Math.round((detection.coordenadas?.y2 || 0) / 80);
+    return `${String(label).toLowerCase()}_${x1}_${y1}_${x2}_${y2}`;
+}
 
-    // Add to "Últimos Accesos"
-    const ultimosAccesosEl = document.getElementById('ultimos-accesos');
-    if (ultimosAccesosEl) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        
-        const newAccessHtml = `
-            <div class="flex items-center p-3 bg-gray-900/50 rounded-lg border border-gray-700 opacity-0 transition-opacity duration-500">
-                <div class="w-10 h-10 bg-cyan-400/10 rounded-full flex items-center justify-center mr-3">
-                    <i class="fas fa-sign-in-alt text-green-400"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-white">${plate}</p>
-                    <p class="text-xs text-gray-400">${timeStr} - ENTRY</p>
-                </div>
-                ${isAuthorized 
-                    ? '<span class="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">OK</span>' 
-                    : '<span class="text-xs text-red-400 bg-red-400/10 px-2 py-1 rounded">DENY</span>'}
-            </div>
-        `;
-        
-        ultimosAccesosEl.insertAdjacentHTML('afterbegin', newAccessHtml);
-        
-        // Remove last item if more than 5
-        const items = ultimosAccesosEl.children;
-        if (items.length > 5) {
-            items[items.length - 1].remove();
-        }
-        
-        // Fade in new item
-        setTimeout(() => {
-            ultimosAccesosEl.firstElementChild.style.opacity = '1';
-        }, 100);
+function shouldEmitDetection(detection, label, cooldownMs = 6000) {
+    const key = buildDetectionKey(detection, label);
+    const now = Date.now();
+    const lastSeen = dashboardState.recentDetections.get(key) || 0;
+    if (now - lastSeen < cooldownMs) {
+        return false;
     }
+    dashboardState.recentDetections.set(key, now);
+    return true;
+}
 
-    // Add to "Actividad Reciente del Sistema"
+function updateDashboardWithDetection(label, confidence) {
+    const meta = getDetectionMeta(label);
+
     const actividadRecienteEl = document.getElementById('actividad-reciente');
     if (actividadRecienteEl) {
-        const now = new Date();
-        const titulo = isAuthorized
-            ? `Acceso autorizado: ${plate}`
-            : `Acceso no autorizado: ${plate}`;
-        const descripcion = `Detección de ${label}`;
-        const timeHuman = 'Hace 1 segundo';
-        const color = isAuthorized ? 'green' : 'yellow';
-        const icon = isAuthorized ? 'check' : 'exclamation-triangle';
-
         const newActivityHtml = `
             <div class="flex items-start space-x-3 pb-3 border-b border-gray-700 opacity-0 transition-opacity duration-500">
-                <div class="w-8 h-8 bg-${color}-400/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-${icon} text-${color}-400 text-xs"></i>
+                <div class="w-8 h-8 bg-${meta.color}-400/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-${meta.icon} text-${meta.color}-400 text-xs"></i>
                 </div>
                 <div class="flex-1">
-                    <p class="text-white text-sm">${titulo}</p>
-                    <p class="text-gray-400 text-xs mt-1">${descripcion} · ${timeHuman}</p>
+                    <p class="text-white text-sm">${meta.title}</p>
+                    <p class="text-gray-400 text-xs mt-1">${meta.description} · confianza ${Math.round(confidence * 100)}%</p>
                 </div>
             </div>
         `;
@@ -382,41 +377,6 @@ function updateDashboardWithAccess(plate, isAuthorized, label) {
         setTimeout(() => {
             actividadRecienteEl.firstElementChild.style.opacity = '1';
         }, 100);
-    }
-
-    // If not authorized, add an alert
-    if (!isAuthorized) {
-        dashboardState.alertasActivas++;
-        const alertasActivasEl = document.getElementById('alertas-activas');
-        if (alertasActivasEl) {
-            alertasActivasEl.textContent = dashboardState.alertasActivas;
-        }
-
-        const ultimasAlertasEl = document.getElementById('ultimas-alertas');
-        if (ultimasAlertasEl) {
-            const newAlertHtml = `
-                <div class="p-3 bg-red-400/5 border-l-4 border-red-500 rounded-r-lg opacity-0 transition-opacity duration-500">
-                    <div class="flex justify-between items-start">
-                        <p class="text-sm font-semibold text-white">Acceso no autorizado detectado</p>
-                        <span class="text-[10px] text-gray-400">ahora</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1">${label} con placa ${plate} intentó acceder</p>
-                </div>
-            `;
-            
-            ultimasAlertasEl.insertAdjacentHTML('afterbegin', newAlertHtml);
-            
-            // Remove last item if more than 3
-            const items = ultimasAlertasEl.children;
-            if (items.length > 3) {
-                items[items.length - 1].remove();
-            }
-            
-            // Fade in new item
-            setTimeout(() => {
-                ultimasAlertasEl.firstElementChild.style.opacity = '1';
-            }, 100);
-        }
     }
 }
 
@@ -448,12 +408,104 @@ function updateDetectionCounters(detections) {
     if (otherCountEl) otherCountEl.textContent = otherCount;
 }
 
+async function detectFacesInBrowser() {
+    if (!faceDetector || !video || !video.videoWidth || !video.videoHeight) {
+        return [];
+    }
+
+    try {
+        const faces = await faceDetector.detect(video);
+        return faces.map((face) => {
+            const box = face.boundingBox || {};
+            const x = Math.max(0, Math.round(box.x || 0));
+            const y = Math.max(0, Math.round(box.y || 0));
+            const width = Math.round(box.width || 0);
+            const height = Math.round(box.height || 0);
+
+            return {
+                tipo: 'person',
+                etiqueta: 'person',
+                confianza: 0.96,
+                coordenadas: {
+                    x1: x,
+                    y1: y,
+                    x2: x + width,
+                    y2: y + height,
+                },
+                origen: 'browser-face-detector',
+            };
+        });
+    } catch (err) {
+        console.warn('No se pudo detectar rostro en navegador:', err);
+        return [];
+    }
+}
+
+function detectPersonHeuristic() {
+    if (!ctx || !canvas || !video || !video.videoWidth || !video.videoHeight) {
+        return [];
+    }
+
+    try {
+        const sampleX = Math.floor(canvas.width * 0.2);
+        const sampleY = Math.floor(canvas.height * 0.08);
+        const sampleW = Math.floor(canvas.width * 0.6);
+        const sampleH = Math.floor(canvas.height * 0.8);
+        const imageData = ctx.getImageData(sampleX, sampleY, sampleW, sampleH);
+        const data = imageData.data;
+
+        let skinPixels = 0;
+        const totalPixels = data.length / 4;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+
+            const isSkinLike =
+                r > 95 &&
+                g > 40 &&
+                b > 20 &&
+                (max - min) > 15 &&
+                Math.abs(r - g) > 15 &&
+                r > g &&
+                r > b;
+
+            if (isSkinLike) {
+                skinPixels++;
+            }
+        }
+
+        const skinRatio = totalPixels > 0 ? (skinPixels / totalPixels) : 0;
+        if (skinRatio < 0.08) {
+            return [];
+        }
+
+        return [{
+            tipo: 'person',
+            etiqueta: 'person',
+            confianza: Math.min(0.85, 0.65 + skinRatio),
+            coordenadas: {
+                x1: sampleX,
+                y1: sampleY,
+                x2: sampleX + sampleW,
+                y2: sampleY + sampleH,
+            },
+            origen: 'heuristic-person-detector',
+        }];
+    } catch (err) {
+        console.warn('No se pudo ejecutar el detector heurístico de persona:', err);
+        return [];
+    }
+}
+
 // Function to send frame to API for YOLO detection
 async function processFrame() {
     if (!video || !ctx || !detectionOverlay) return;
     if (!video.videoWidth || !video.videoHeight) return;
     if (isProcessing) return;
-    if (!apiToken) return; // No token, can't call API
     
     isProcessing = true;
     
@@ -461,33 +513,50 @@ async function processFrame() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Convert canvas to base64
-    const imageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.9);
     
     // Clear previous detections
     detectionOverlay.innerHTML = '';
     
     try {
-        // Call YOLO API
+        const localFaceDetections = await detectFacesInBrowser();
+        const heuristicPersonDetections = localFaceDetections.length ? [] : detectPersonHeuristic();
+        let detecciones = [...localFaceDetections, ...heuristicPersonDetections];
+
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        if (apiToken && apiToken !== 'local') {
+            headers['Authorization'] = `Bearer ${apiToken}`;
+        }
+
         const response = await fetch(`${API_URL}/ai/procesar-imagen`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiToken}`
-            },
+            headers,
             body: JSON.stringify({
                 imagen_base64: imageBase64
             })
         });
         
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
+        if (response.ok) {
+            const result = await response.json();
+
+            if (result.exito && Array.isArray(result.detecciones)) {
+                const hasBackendPerson = result.detecciones.some((detection) => {
+                    const label = String(detection.etiqueta || detection.tipo || '').toLowerCase();
+                    return ['person', 'persona'].includes(label);
+                });
+
+                detecciones = [...result.detecciones];
+                if (!hasBackendPerson && localFaceDetections.length) {
+                    detecciones = detecciones.concat(localFaceDetections);
+                }
+            }
+        } else {
+            console.warn(`La API de visión respondió ${response.status}; usando respaldo local si existe.`);
         }
-        
-        const result = await response.json();
-        
-        if (result.exito && result.detecciones) {
-            // Update detection counters
-            updateDetectionCounters(result.detecciones);
+        if (detecciones.length) {
+            updateDetectionCounters(detecciones);
             
             // Get video element dimensions to scale coordinates
             const videoRect = video.getBoundingClientRect();
@@ -495,7 +564,7 @@ async function processFrame() {
             const scaleY = videoRect.height / canvas.height;
             
             // Process each detection
-            result.detecciones.forEach(detection => {
+            detecciones.forEach(detection => {
                 const label = detection.etiqueta || detection.tipo || 'Objeto';
                 const isVehicle = ['car', 'truck', 'bus', 'motorcycle', 'bicycle'].includes(label.toLowerCase());
                 const isPerson = ['person', 'persona'].includes(label.toLowerCase());
@@ -533,21 +602,18 @@ async function processFrame() {
                 div.appendChild(labelDiv);
                 detectionOverlay.appendChild(div);
 
-                // If it's a vehicle, update the dashboard (simulate plate detection)
-                if (isVehicle && detection.confianza > 0.7) { // Only process if confidence > 70%
-                    const plate = generateRandomPlate();
-                    if (!dashboardState.detectedPlates.has(plate)) {
-                        dashboardState.detectedPlates.add(plate);
-                        const isAuthorized = Math.random() > 0.3; // 70% chance of being authorized
-                        updateDashboardWithAccess(plate, isAuthorized, label);
-                    }
+                // Registrar actividad útil para personas, vehículos y otros objetos
+                if (detection.confianza > 0.7 && shouldEmitDetection(detection, label)) {
+                    updateDashboardWithDetection(label, detection.confianza || 0);
                 }
             });
+        } else {
+            updateDetectionCounters([]);
         }
         
     } catch (err) {
         console.error("Error processing frame:", err);
-        // Optional: show error on screen
+        updateDetectionCounters([]);
     } finally {
         isProcessing = false;
     }

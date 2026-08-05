@@ -181,7 +181,7 @@ class ApiService
         try {
             $response = $this->request('POST', '/auth/login', [
                 'email' => $credentials['email'],
-                'contraseña' => $credentials['password']
+                'password' => $credentials['password']
             ]);
 
             $user = $response;

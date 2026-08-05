@@ -22,6 +22,17 @@ const getDefaultBaseURL = () => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
+  const expoHost =
+    Constants.expoConfig?.hostUri ??
+    (Constants as any)?.manifest2?.extra?.expoGo?.debuggerHost ??
+    '';
+  const expoIp = typeof expoHost === 'string' ? expoHost.split(':')[0] : '';
+  if (expoIp && /^\d{1,3}(\.\d{1,3}){3}$/.test(expoIp)) {
+    // En Expo Go sobre dispositivo físico, usar la IP del host en HTTP evita
+    // fallos de certificado autofirmado al conectar con el gateway local.
+    return `http://${expoIp}/mobile-api`;
+  }
+
   // Para desarrollo local usamos HTTP directo al Flask (puerto 5000) por compatibilidad.
   // Cuando el Gateway Nginx esté activo, cambiar a:
   //   https://<IP-PC>/mobile-api  (con certificado aceptado)
@@ -29,14 +40,14 @@ const getDefaultBaseURL = () => {
   const USE_GATEWAY = true; // Conexión al Gateway Nginx HTTPS de OKO VISION
 
   if (USE_GATEWAY) {
-    // Gateway Nginx (público) con prefijo /mobile-api (SSL autofirmado OK gracias a rejectUnauthorized: false)
+    // Gateway Nginx (público) con prefijo /mobile-api.
     if (Platform.OS === 'android') {
-      return `https://10.0.2.2/mobile-api`;
+      return `http://10.0.2.2/mobile-api`;
     }
     if (Platform.OS === 'ios') {
-      return `https://127.0.0.1/mobile-api`;
+      return `http://127.0.0.1/mobile-api`;
     }
-    return `https://localhost/mobile-api`;
+    return `http://localhost/mobile-api`;
   }
 
   // Fallback directo a Flask (desarrollo)

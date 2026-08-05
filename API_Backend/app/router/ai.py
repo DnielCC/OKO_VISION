@@ -4,7 +4,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.security.auth import obtener_usuario_actual
 from app.vision import procesar_imagen, autorizar_acceso, calcular_area_coordenadas, detectar_anomalias
-from app.data.database import Usuario, LaravelAccessLog, LaravelAlert, LaravelVehicle
+from app.data.database import Usuario
 from app.data.db import get_db
 import datetime
 
@@ -28,7 +28,7 @@ class RegistroAcceso(BaseModel):
     esta_autorizado: bool
 
 @router.post("/procesar-imagen")
-def api_procesar_imagen(datos: EntradaImagen, usuario_actual: Usuario = Depends(obtener_usuario_actual), db: Session = Depends(get_db)):
+def api_procesar_imagen(datos: EntradaImagen, db: Session = Depends(get_db)):
     """
     Endpoint para procesar una imagen y detectar objetos (vehículos, etc.) usando YOLOv8.
     Requiere autenticación.
@@ -37,50 +37,26 @@ def api_procesar_imagen(datos: EntradaImagen, usuario_actual: Usuario = Depends(
         resultado = procesar_imagen(datos.imagen_base64)
         if not resultado["exito"]:
             raise HTTPException(status_code=500, detail=resultado.get("error", "Error desconocido"))
-        
         detecciones = resultado.get("detecciones", [])
-        
-        # Procesar cada detección de vehículo
+        resumen = {
+            "personas": 0,
+            "vehiculos": 0,
+            "otros": 0,
+        }
+
         for deteccion in detecciones:
-            etiqueta = deteccion.get("tipo") or deteccion.get("etiqueta") or ""
-            etiqueta_lower = etiqueta.lower()
-            if etiqueta_lower in ["car", "truck", "bus", "motorcycle", "bicycle", "vehicle", "vehiculo"]:
-                # Simular detección de placa (podemos usar una placa inventada para testing por ahora
-                # En un sistema real, esto vendría de un sistema OCR de placa
-                placa = "ABC-" + str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")[-6:])
-                
-                # Verificar si el vehículo está registrado
-                vehiculo_registrado = db.query(LaravelVehicle).filter(LaravelVehicle.plate == placa).first()
-                autorizado = vehiculo_registrado is not None
-                
-                # Guardar registro de acceso
-                # Usar user_id 1 por ahora, que es el admin de Laravel (admin@okovision.com
-                nuevo_acceso = LaravelAccessLog(
-                    user_id=1,
-                    vehicle_plate=placa,
-                    access_time=datetime.datetime.utcnow(),
-                    access_type="ENTRY",
-                    is_authorized=autorizado
-                )
-                db.add(nuevo_acceso)
-                db.commit()
-                db.refresh(nuevo_acceso)
-                
-                # Si no está autorizado, crear alerta
-                if not autorizado:
-                    nueva_alerta = LaravelAlert(
-                    title="Acceso no autorizado",
-                    description=f"Vehículo con placa {placa} intentó acceder sin autorización",
-                    severity="CRITICAL",
-                    created_at=datetime.datetime.utcnow(),
-                    is_resolved=False
-                )
-                    db.add(nueva_alerta)
-                    db.commit()
-        
+            etiqueta = str(deteccion.get("tipo") or deteccion.get("etiqueta") or "").lower()
+            if etiqueta in {"person", "persona"}:
+                resumen["personas"] += 1
+            elif etiqueta in {"car", "truck", "bus", "motorcycle", "bicycle", "vehicle", "vehiculo", "vehículo"}:
+                resumen["vehiculos"] += 1
+            else:
+                resumen["otros"] += 1
+
+        resultado["resumen"] = resumen
+        resultado["timestamp"] = datetime.datetime.utcnow().isoformat()
         return resultado
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al procesar la imagen: {str(e)}")
 
 @router.post("/autorizar-acceso")

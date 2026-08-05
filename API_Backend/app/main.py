@@ -138,7 +138,7 @@ async def metrics_endpoint():
 # Health check público
 # =========================================
 @app.get("/")
-@limiter.limit("10/second")
+@limiter.limit("500/second")
 def root(request: Request):
     return {
         "message": "OKO VISION API is running",
@@ -153,7 +153,7 @@ def root(request: Request):
     }
 
 @app.get("/health", tags=["Sistema"])
-@limiter.limit("30/second")
+@limiter.limit("2000/second")
 def health_check(request: Request):
     return {
         "status": "healthy",

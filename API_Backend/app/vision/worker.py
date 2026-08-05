@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 import uuid
 import base64
 import io
+import cv2
 import numpy as np
 from PIL import Image
 from ultralytics import YOLO
@@ -18,19 +19,57 @@ except Exception as e:
     print(f"Error al cargar el modelo YOLO: {e}")
     modelo = None
 
+try:
+    cascade_classifier = getattr(cv2, "CascadeClassifier", None)
+    haar_path = getattr(getattr(cv2, "data", None), "haarcascades", None)
+    if cascade_classifier is not None and haar_path:
+        face_cascade = cascade_classifier(
+            haar_path + "haarcascade_frontalface_default.xml"
+        )
+    else:
+        face_cascade = None
+except Exception as e:
+    print(f"Error al cargar el detector facial: {e}")
+    face_cascade = None
+
+
+def _detectar_rostros(img_np: np.ndarray) -> List[Dict[str, Any]]:
+    if face_cascade is None or face_cascade.empty():
+        return []
+
+    try:
+        gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+        gray = cv2.equalizeHist(gray)
+        rostros = face_cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(40, 40),
+        )
+
+        detecciones = []
+        for (x, y, w, h) in rostros:
+            detecciones.append({
+                "tipo": "person",
+                "confianza": 0.88,
+                "etiqueta": "person",
+                "coordenadas": {
+                    "x1": int(x),
+                    "y1": int(y),
+                    "x2": int(x + w),
+                    "y2": int(y + h),
+                }
+            })
+        return detecciones
+    except Exception:
+        return []
+
 
 def procesar_imagen(imagen_base64: str) -> Dict[str, Any]:
     """
     Procesa una imagen en codificación base64 usando YOLOv8 para detectar objetos.
     Devuelve un diccionario con los resultados de detección.
     """
-    if modelo is None:
-        return {
-            "exito": False,
-            "error": "Modelo YOLO no está disponible",
-            "detecciones": []
-        }
-
     try:
         # Decodificar la imagen base64
         # Eliminar el encabezado si está presente (ej: "data:image/jpeg;base64,")
@@ -44,30 +83,35 @@ def procesar_imagen(imagen_base64: str) -> Dict[str, Any]:
         # YOLO espera imágenes en formato RGB como array de numpy
         img_np = np.array(imagen.convert("RGB"))
 
-        # Ejecutar la detección
-        resultados = modelo(img_np)
-
-        # Procesar los resultados para devolverlos en un formato amigable
         detecciones = []
-        nombres_clases = modelo.names
+        if modelo is not None:
+            resultados = modelo(img_np)
+            nombres_clases = modelo.names
 
-        for result in resultados:
-            boxes = result.boxes
-            for box in boxes:
-                # Obtener la clase, confianza y coordenadas
-                clase_id = int(box.cls[0])
-                confianza = float(box.conf[0])
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
+            for result in resultados:
+                boxes = result.boxes
+                for box in boxes:
+                    clase_id = int(box.cls[0])
+                    confianza = float(box.conf[0])
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-                deteccion = {
-                    "tipo": nombres_clases.get(clase_id, f"clase_{clase_id}"),
-                    "confianza": confianza,
-                    "etiqueta": nombres_clases.get(clase_id, f"clase_{clase_id}"),
-                    "coordenadas": {
-                        "x1": x1, "y1": y1, "x2": x2, "y2": y2
+                    deteccion = {
+                        "tipo": nombres_clases.get(clase_id, f"clase_{clase_id}"),
+                        "confianza": confianza,
+                        "etiqueta": nombres_clases.get(clase_id, f"clase_{clase_id}"),
+                        "coordenadas": {
+                            "x1": x1, "y1": y1, "x2": x2, "y2": y2
+                        }
                     }
-                }
-                detecciones.append(deteccion)
+                    detecciones.append(deteccion)
+
+        tiene_persona = any(
+            str(d.get("tipo") or d.get("etiqueta") or "").lower() in {"person", "persona"}
+            for d in detecciones
+        )
+
+        if not tiene_persona:
+            detecciones.extend(_detectar_rostros(img_np))
 
         return {
             "exito": True,

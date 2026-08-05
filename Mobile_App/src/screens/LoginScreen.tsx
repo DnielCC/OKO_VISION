@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, StyleSheet, Text, Image, KeyboardAvoidingView, TouchableWithoutFeedback,
-  Keyboard, Platform, ScrollView,
+  View, StyleSheet, Text, KeyboardAvoidingView,
+  Platform, ScrollView,
 } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,12 +19,12 @@ import { DEMO_MODE_ENABLED } from '../api/client';
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { login, biometryEnabled, setBiometryEnabled } = useAuth();
-  const { control, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<LoginSchemaType>({
+  const { login, error, biometryEnabled, setBiometryEnabled } = useAuth();
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginSchemaType>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: DEMO_MODE_ENABLED ? 'admin@okovision.com' : '',
-      password: DEMO_MODE_ENABLED ? '12345678' : '',
+      email: 'juan@gmail.com',
+      password: '12345678',
     },
   });
   const [secure, setSecure] = useState(true);
@@ -76,13 +76,16 @@ const LoginScreen: React.FC = () => {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={styles.safe}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{ flex: 1 }}
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="on-drag"
         >
-          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
             <View style={styles.hero}>
               <View style={styles.logoWrap}>
                 <IconButton icon="eye-outline" iconColor={OKO_COLORS.accentCyan} size={68} mode="contained" containerColor="rgba(0,242,255,0.15)" style={styles.logoIcon} />
@@ -147,6 +150,10 @@ const LoginScreen: React.FC = () => {
                 {isSubmitting ? 'Ingresando...' : 'INGRESAR'}
               </Button>
 
+              {!!error && !snack.visible && (
+                <Text style={styles.inlineError}>{error}</Text>
+              )}
+
               {bioSupported && (
                 <Button
                   mode="text"
@@ -174,22 +181,21 @@ const LoginScreen: React.FC = () => {
 
               <Text style={styles.hint}>
                 {DEMO_MODE_ENABLED
-                  ? 'Modo demo activo: admin@okovision.com / 12345678'
-                  : 'Admin demo: admin@okovision.com / 12345678'}
+                  ? 'Modo demo activo: juan@gmail.com / 12345678'
+                  : 'Usuario demo: juan@gmail.com / 12345678'}
               </Text>
             </GlassCard>
-          </ScrollView>
-        </KeyboardAvoidingView>
-        <Snackbar
-          visible={snack.visible}
-          onDismiss={() => setSnack((s) => ({ ...s, visible: false }))}
-          duration={3500}
-          style={styles.snack}
-        >
-          {snack.msg}
-        </Snackbar>
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <Snackbar
+        visible={snack.visible}
+        onDismiss={() => setSnack((s) => ({ ...s, visible: false }))}
+        duration={3500}
+        style={styles.snack}
+      >
+        {snack.msg}
+      </Snackbar>
+    </SafeAreaView>
   );
 };
 
@@ -211,6 +217,7 @@ const styles = StyleSheet.create({
   btnContent: { paddingVertical: 10, fontWeight: '800' },
   checkRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginLeft: -6 },
   checkLabel: { color: OKO_COLORS.textSecondary, fontSize: 13, fontWeight: '500' },
+  inlineError: { marginTop: 10, color: OKO_COLORS.danger, textAlign: 'center', fontSize: 12, fontWeight: '600' },
   hint: { textAlign: 'center', marginTop: 20, color: OKO_COLORS.textSecondary, fontSize: 11 },
   snack: { backgroundColor: OKO_COLORS.bgSecondary, borderWidth: 1, borderColor: OKO_COLORS.border },
 });
