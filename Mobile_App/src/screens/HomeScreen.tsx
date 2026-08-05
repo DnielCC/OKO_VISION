@@ -39,7 +39,7 @@ const HomeScreen: React.FC = () => {
 
       if (vehiclesR.status === 'fulfilled') {
         const raw = Array.isArray(vehiclesR.value.data) ? vehiclesR.value.data : [];
-        vs = raw.filter((v) => v.owner_id === myId);
+        vs = raw.filter((v) => !v.owner_id || Number(v.owner_id) === Number(myId));
       }
       if (accessR.status === 'fulfilled') {
         const raw = Array.isArray(accessR.value.data) ? accessR.value.data : [];

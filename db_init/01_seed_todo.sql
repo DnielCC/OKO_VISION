@@ -326,7 +326,7 @@ ALTER SEQUENCE public.dispositivos_id_seq OWNER TO oko_admin;
 -- Name: dispositivos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: oko_admin
 --
 
-ALTERCREATE SEQUENCE public.dispositivos_id_seq OWNED BY public.dispositivos.id;
+ALTER SEQUENCE public.dispositivos_id_seq OWNED BY public.dispositivos.id;
 
 
 --

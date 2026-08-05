@@ -125,7 +125,11 @@ function parseBody(config: AxiosRequestConfig): Record<string, any> {
 }
 
 function normalizeUrl(url?: string): string {
-  return (url || '').replace(/^https?:\/\/[^/]+/, '');
+  let u = (url || '').replace(/^https?:\/\/[^/]+/, '');
+  if (u.length > 1 && u.endsWith('/')) {
+    u = u.slice(0, -1);
+  }
+  return u;
 }
 
 function extractId(path: string): number | null {
@@ -160,11 +164,11 @@ export async function handleDemoRequest(config: AxiosRequestConfig): Promise<Axi
     return ok(config, demoUser);
   }
 
-  if (method === 'GET' && path === '/vehiculos/') {
+  if (method === 'GET' && path === '/vehiculos') {
     return ok(config, demoVehicles);
   }
 
-  if (method === 'POST' && path === '/vehiculos/') {
+  if (method === 'POST' && path === '/vehiculos') {
     const next: Vehicle = {
       id: Math.max(0, ...demoVehicles.map((v) => v.id || 0)) + 1,
       plate: String(body.plate || '').toUpperCase(),
@@ -197,11 +201,11 @@ export async function handleDemoRequest(config: AxiosRequestConfig): Promise<Axi
     return ok(config, { ok: true });
   }
 
-  if (method === 'GET' && path === '/accesos/') {
+  if (method === 'GET' && path === '/accesos') {
     return ok(config, demoAccessLogs);
   }
 
-  if (method === 'POST' && path === '/accesos/') {
+  if (method === 'POST' && path === '/accesos') {
     const newAccess: AccessLog = {
       id: Math.max(0, ...demoAccessLogs.map((a) => a.id || 0)) + 1,
       user_id: Number(body.user_id || demoUser.id),
@@ -215,7 +219,7 @@ export async function handleDemoRequest(config: AxiosRequestConfig): Promise<Axi
     return ok(config, newAccess, 201);
   }
 
-  if (method === 'GET' && path === '/alerts/') {
+  if (method === 'GET' && path === '/alerts') {
     return ok(config, demoAlerts);
   }
 

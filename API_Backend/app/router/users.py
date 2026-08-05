@@ -8,7 +8,33 @@ from app.security.auth import obtener_hash_contraseña, obtener_usuario_actual
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
-@router.get("/")
+
+@router.get("/me")
+def obtener_yo(
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(obtener_usuario_actual),
+):
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_actual.id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    persona = db.query(Persona).filter(Persona.id == usuario.id_persona).first()
+    base = {
+        "id": usuario.id,
+        "username": usuario.identificador,
+        "email": persona.mail if persona else None,
+        "nombre": persona.nombre if persona else None,
+        "apellidos": persona.apellidos if persona else None,
+        "id_rol": usuario.id_rol,
+        "id_persona": usuario.id_persona,
+        "id_carrera": getattr(usuario, "id_carrera", None),
+        "id_departamento": getattr(usuario, "id_departamento", None),
+        "activo": bool(getattr(usuario, "activo", True)),
+        "foto": getattr(persona, "foto", None) if persona else None,
+    }
+    return base
+
+
+@router.get("")
 def obtener_todos(db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     # Unimos con Persona para obtener el email y nombre para el portal de usuario
     resultados = db.query(Usuario, Persona).join(Persona, Usuario.id_persona == Persona.id).all()
@@ -33,7 +59,7 @@ def obtener_uno(usuario_id: int, db: Session = Depends(get_db), usuario_actual: 
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario
 
-@router.post("/")
+@router.post("")
 def crear(datos: UsuarioCreate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     # Hashear contraseña antes de guardar
     datos_usuario = datos.model_dump()

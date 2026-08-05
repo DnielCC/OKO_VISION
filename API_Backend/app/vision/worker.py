@@ -11,13 +11,29 @@ import numpy as np
 from PIL import Image
 from ultralytics import YOLO
 
-# Cargar el modelo YOLOv8 una vez al iniciar la aplicación
-# Usamos el modelo nano por defecto para mayor velocidad
-try:
-    modelo = YOLO("yolov8n.pt")
-except Exception as e:
-    print(f"Error al cargar el modelo YOLO: {e}")
-    modelo = None
+modelo = None
+modelo_carga_intentada = False
+
+
+def _obtener_modelo():
+    global modelo, modelo_carga_intentada
+
+    if modelo is not None:
+        return modelo
+
+    if modelo_carga_intentada:
+        return None
+
+    modelo_carga_intentada = True
+    try:
+        # Cargar el modelo bajo demanda evita que el contenedor falle
+        # durante el healthcheck inicial en instancias pequeñas.
+        modelo = YOLO("yolov8n.pt")
+    except Exception as e:
+        print(f"Error al cargar el modelo YOLO: {e}")
+        modelo = None
+
+    return modelo
 
 try:
     cascade_classifier = getattr(cv2, "CascadeClassifier", None)
@@ -84,9 +100,10 @@ def procesar_imagen(imagen_base64: str) -> Dict[str, Any]:
         img_np = np.array(imagen.convert("RGB"))
 
         detecciones = []
-        if modelo is not None:
-            resultados = modelo(img_np)
-            nombres_clases = modelo.names
+        modelo_yolo = _obtener_modelo()
+        if modelo_yolo is not None:
+            resultados = modelo_yolo(img_np)
+            nombres_clases = modelo_yolo.names
 
             for result in resultados:
                 boxes = result.boxes

@@ -10,6 +10,7 @@ class VehiculoBase(BaseModel):
     anio: Optional[int] = Field(None, ge=1900, le=2100)
     color: Optional[str] = None
     tipo: str = Field(..., pattern="^(auto|moto|camioneta|otro)$")
+    photo_uri: Optional[str] = None
     
     @field_validator("plate")
     @classmethod
@@ -53,7 +54,7 @@ class VehiculoBase(BaseModel):
         if v is None or v.strip() == "":
             return None
         v = v.strip()
-        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{3,50}", v):
+        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\- ]{1,50}", v):
             raise ValueError("Color inválido")
         return v
     
@@ -63,7 +64,8 @@ class VehiculoBase(BaseModel):
         return v.strip().lower()
 
 class VehiculoCreate(VehiculoBase):
-    owner_id: int
+    owner_id: Optional[int] = None
+    photo_uri: Optional[str] = None
 
 class VehiculoUpdate(BaseModel):
     plate: Optional[str] = None
@@ -72,6 +74,8 @@ class VehiculoUpdate(BaseModel):
     anio: Optional[int] = None
     color: Optional[str] = None
     tipo: Optional[str] = None
+    owner_id: Optional[int] = None
+    photo_uri: Optional[str] = None
     
     @field_validator("plate")
     @classmethod
@@ -119,7 +123,7 @@ class VehiculoUpdate(BaseModel):
         if v is None or v.strip() == "":
             return None
         v = v.strip()
-        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{3,50}", v):
+        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\- ]{1,50}", v):
             raise ValueError("Color inválido")
         return v
     

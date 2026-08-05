@@ -18,46 +18,34 @@ import { DEMO_MODE_ENABLED, handleDemoRequest } from './demoApi';
  *       Ej: https://192.168.10.20/mobile-api
  */
 const getDefaultBaseURL = () => {
+  // Prioridad máxima: usar la URL de AWS configurada en .env
   if (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
+    const rawUrl = process.env.EXPO_PUBLIC_API_URL.trim();
+    const envUrl = rawUrl.replace(/\/+$/, '');
+    console.log('🔗 Using API URL from .env:', envUrl);
+    return envUrl;
   }
 
+  // Fallback para desarrollo local con Expo Go
   const expoHost =
     Constants.expoConfig?.hostUri ??
     (Constants as any)?.manifest2?.extra?.expoGo?.debuggerHost ??
     '';
   const expoIp = typeof expoHost === 'string' ? expoHost.split(':')[0] : '';
+  
   if (expoIp && /^\d{1,3}(\.\d{1,3}){3}$/.test(expoIp)) {
-    // En Expo Go sobre dispositivo físico, usar la IP del host en HTTP evita
-    // fallos de certificado autofirmado al conectar con el gateway local.
+    console.log('🔗 Using Expo Go host IP:', expoIp);
     return `http://${expoIp}/mobile-api`;
   }
 
-  // Para desarrollo local usamos HTTP directo al Flask (puerto 5000) por compatibilidad.
-  // Cuando el Gateway Nginx esté activo, cambiar a:
-  //   https://<IP-PC>/mobile-api  (con certificado aceptado)
-  const FALLBACK_PORT = 5000;
-  const USE_GATEWAY = true; // Conexión al Gateway Nginx HTTPS de OKO VISION
-
-  if (USE_GATEWAY) {
-    // Gateway Nginx (público) con prefijo /mobile-api.
-    if (Platform.OS === 'android') {
-      return `http://10.0.2.2/mobile-api`;
-    }
-    if (Platform.OS === 'ios') {
-      return `http://127.0.0.1/mobile-api`;
-    }
-    return `http://localhost/mobile-api`;
-  }
-
-  // Fallback directo a Flask (desarrollo)
+  // Fallback final para emuladores
   if (Platform.OS === 'android') {
-    return `http://10.0.2.2:${FALLBACK_PORT}/api`;
+    return 'http://10.0.2.2/mobile-api';
   }
   if (Platform.OS === 'ios') {
-    return `http://127.0.0.1:${FALLBACK_PORT}/api`;
+    return 'http://127.0.0.1/mobile-api';
   }
-  return `http://localhost:${FALLBACK_PORT}/api`;
+  return 'http://localhost/mobile-api';
 };
 
 const baseURL = getDefaultBaseURL();
@@ -70,8 +58,6 @@ const api: AxiosInstance = axios.create({
     Accept: 'application/json',
     'X-Requested-With': 'OKO-Vision-Mobile',
   },
-  // Para uso temporal con SSL autofirmado en desarrollo
-  ...(Platform.OS !== 'web' ? { rejectUnauthorized: false } : {}),
 });
 
 if (DEMO_MODE_ENABLED) {

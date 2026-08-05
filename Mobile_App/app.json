@@ -17,6 +17,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.okovision.mobile",
       "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        },
         "NSCameraUsageDescription": "La cámara se usa para escanear códigos QR de acceso y tomar fotos de vehículos",
         "NSPhotoLibraryUsageDescription": "Accede a la galería para adjuntar fotos a tus vehículos",
         "NSLocationWhenInUseUsageDescription": "Ubicación para registrar dónde accediste al campus",
@@ -74,7 +77,8 @@
           "color": "#00F2FF"
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ]
   }
 }

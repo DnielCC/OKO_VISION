@@ -40,7 +40,7 @@ def _serialize_alert(alert: LaravelAlert) -> dict:
     }
 
 
-@router.get("/")
+@router.get("")
 def obtener_alertas(
     db: Session = Depends(get_db),
     usuario_actual: Usuario = Depends(obtener_usuario_actual),

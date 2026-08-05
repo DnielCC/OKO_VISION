@@ -27,7 +27,7 @@ const VehiclesScreen: React.FC = () => {
       if (ref) setRefreshing(true); else setLoading(true);
       const { data } = await api.get<Vehicle[]>('/vehiculos/');
       const myId = user?.id ?? -1;
-      const mine = (Array.isArray(data) ? data : []).filter((v) => v.owner_id === myId);
+      const mine = (Array.isArray(data) ? data : []).filter((v) => !v.owner_id || Number(v.owner_id) === Number(myId));
       setList(mine);
     } catch (e) {
       setSnack({ visible: true, msg: extractErrorMessage(e, 'Error al cargar vehículos') });

@@ -25,7 +25,7 @@ const HistoryScreen: React.FC = () => {
   const load = useCallback(async (ref = false) => {
     try {
       if (ref) setRefreshing(true); else setLoading(true);
-      const { data } = await api.get<AccessLog[]>('/accesos/');
+      const { data } = await api.get<AccessLog[]>('/accesos');
       const myId = user?.id ?? -1;
       const mine = (Array.isArray(data) ? data : [])
         .filter((a) => a.user_id === myId)

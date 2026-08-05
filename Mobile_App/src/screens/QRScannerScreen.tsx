@@ -79,7 +79,7 @@ const QRScannerScreen: React.FC = () => {
         notes: `QR OKO VISION · escaneado por ${user?.username}`,
         timestamp: new Date().toISOString(),
       };
-      const r = await api.post<AccessLog>('/accesos/', body);
+      const r = await api.post<AccessLog>('/accesos', body);
       setResult({
         ok: true,
         msg: `¡Acceso registrado correctamente para ${parsed.uname || parsed.uid}!`,

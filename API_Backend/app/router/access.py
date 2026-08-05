@@ -175,7 +175,7 @@ def _sync_laravel_access_log(
         mirror.is_authorized = is_authorized
 
 
-@router.get("/")
+@router.get("")
 def obtener_todos(db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     resultados = (
         db.query(Acceso, Persona, Usuario, LaravelAccessLog)
@@ -197,7 +197,7 @@ def obtener_todos(db: Session = Depends(get_db), usuario_actual: Usuario = Depen
     return salida
 
 
-@router.post("/")
+@router.post("")
 def crear(datos: AccesoCreate, db: Session = Depends(get_db), usuario_actual: Usuario = Depends(obtener_usuario_actual)):
     user_id = datos.user_id or usuario_actual.id
     payload = {

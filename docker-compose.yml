@@ -229,7 +229,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # SSL: montaje lectura/escritura (entrypoint genera los certs aqui si faltan)
+      - ./docker/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./docker/nginx/ssl:/etc/nginx/ssl
       - nginx_logs:/var/log/nginx
     depends_on:

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.data.db import engine, Base, get_db
 from app.data import database
-from app.router import auto, users, access, personas, auth, ai, alerts
+from app.router import auto, users, access, personas, auth, ai, alerts, qr
 
 # Métricas Prometheus
 from prometheus_client import (
@@ -64,9 +64,20 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    redirect_slashes=False,
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.middleware("http")
+async def strip_trailing_slash(request: Request, call_next):
+    path = request.scope.get("path", "")
+    if len(path) > 1 and path.endswith("/"):
+        new_path = path.rstrip("/")
+        request.scope["path"] = new_path
+        request.scope["raw_path"] = new_path.encode("ascii")
+    return await call_next(request)
 
 # =========================================
 # Seguridad: Trusted Hosts (anti host header attack)
@@ -174,6 +185,7 @@ app.include_router(auto.vehiculos, prefix="/vehicles", include_in_schema=False)
 app.include_router(access.router)
 app.include_router(access.router, prefix="/access-logs", include_in_schema=False)
 app.include_router(alerts.router)
+app.include_router(qr.router)
 app.include_router(personas.router)
 app.include_router(personas.router, prefix="/people", include_in_schema=False)
 app.include_router(ai.router)
@@ -190,6 +202,7 @@ app.include_router(auto.vehiculos, prefix=f"{_prefix}/vehicles", include_in_sche
 app.include_router(access.router, prefix=_prefix, include_in_schema=False)
 app.include_router(access.router, prefix=f"{_prefix}/access-logs", include_in_schema=False)
 app.include_router(alerts.router, prefix=_prefix, include_in_schema=False)
+app.include_router(qr.router, prefix=_prefix, include_in_schema=False)
 app.include_router(personas.router, prefix=_prefix, include_in_schema=False)
 app.include_router(personas.router, prefix=f"{_prefix}/people", include_in_schema=False)
 app.include_router(ai.router, prefix=_prefix, include_in_schema=False)
@@ -204,5 +217,35 @@ def api_health(db: Session = Depends(get_db)):
     return {
         "status": "healthy",
         "service": "OKO VISION API",
+        "database": "postgresql" if db_ok else "unreachable",
+    }
+
+# =========================================
+# Duplicado de routers con prefijo /mobile-api para App Móvil
+# =========================================
+_mobile_prefix = "/mobile-api"
+app.include_router(auth.router, prefix=_mobile_prefix, include_in_schema=False)
+app.include_router(users.router, prefix=_mobile_prefix, include_in_schema=False)
+app.include_router(users.router, prefix=f"{_mobile_prefix}/users", include_in_schema=False)
+app.include_router(auto.vehiculos, prefix=_mobile_prefix, include_in_schema=False)
+app.include_router(auto.vehiculos, prefix=f"{_mobile_prefix}/vehicles", include_in_schema=False)
+app.include_router(access.router, prefix=_mobile_prefix, include_in_schema=False)
+app.include_router(access.router, prefix=f"{_mobile_prefix}/access-logs", include_in_schema=False)
+app.include_router(alerts.router, prefix=_mobile_prefix, include_in_schema=False)
+app.include_router(qr.router, prefix=_mobile_prefix, include_in_schema=False)
+app.include_router(personas.router, prefix=_mobile_prefix, include_in_schema=False)
+app.include_router(personas.router, prefix=f"{_mobile_prefix}/people", include_in_schema=False)
+app.include_router(ai.router, prefix=_mobile_prefix, include_in_schema=False)
+
+@app.get(f"{_mobile_prefix}/health", tags=["Salud"], include_in_schema=False)
+def mobile_api_health(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        db_ok = False
+    return {
+        "status": "healthy",
+        "service": "OKO VISION MOBILE API",
         "database": "postgresql" if db_ok else "unreachable",
     }
